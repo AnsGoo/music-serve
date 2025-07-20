@@ -1,0 +1,107 @@
+use chrono::{DateTime, Utc};
+use serde::{Serialize, Deserialize};
+use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter, QueryResult, DatabaseConnection};
+use sea_orm::prelude::*;
+use uuid::Uuid;
+
+// 定义用户表实体
+#[derive(Debug, Clone, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+#[sea_orm(table_name = "user")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = false)]
+    pub id: Uuid,
+    pub username: String,
+    pub nickname: Option<String>,
+    pub email: Option<String>,
+    pub password_hash: String,
+    pub role: String,
+    #[sea_orm(indexed)]
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub created_by: Option<String>,
+    pub updated_by: Option<String>,
+    #[sea_orm(indexed,default=false)]
+    pub delete_flag: bool,
+}
+
+// 定义关联
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    // 如果有相关表，可以在这里定义关联
+}
+
+// 为Model实现ActiveModelTrait
+impl ActiveModelBehavior for ActiveModel {
+       fn new() -> Self {
+        Self {
+            id: ActiveValue::Set(Uuid::now_v7()),
+            created_at: ActiveValue::Set(Utc::now().to_utc()),
+            updated_at: ActiveValue::Set(Utc::now().to_utc()),
+            delete_flag: ActiveValue::Set(false),
+            ..ActiveModelTrait::default()
+        }
+    }
+}
+
+// 重命名为User以保持兼容性
+pub type User = Model;
+
+// 用户注册请求
+#[derive(Debug, Deserialize)]
+pub struct RegisterRequest {
+    pub username: String,
+    pub password: String,
+}
+
+// 用户登录请求
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+// JWT响应
+#[derive(Debug, Serialize)]
+pub struct JwtResponse {
+    pub token: String,
+    pub expires_at: i64,
+}
+
+// API响应模型
+#[derive(Debug, Serialize)]
+pub struct ApiResponse<T> {
+    pub success: bool,
+    pub data: Option<T>,
+    pub message: Option<String>,
+}
+
+// 为ApiResponse实现Display trait
+impl<T: Serialize> std::fmt::Display for ApiResponse<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}",  self.message.clone().expect("No message").to_string())
+    }
+}
+
+// 为User模型添加数据访问方法
+impl User {
+    // 根据邮箱查找用户
+    pub async fn find_by_username(db: &DatabaseConnection, username: &str) -> Result<Option<Self>, DbErr> {
+        Entity::find()
+            .filter(Column::Username.eq(username)).filter(Column::DeleteFlag.eq(false))
+            .one(db)
+            .await
+    }
+    
+
+    // 创建新用户
+    pub async fn create(db: &DatabaseConnection, request: &RegisterRequest, password_hash: &str) -> Result<Self, DbErr> {
+        let user = ActiveModel {
+            username: ActiveValue::Set(request.username.clone()),
+            password_hash: ActiveValue::Set(password_hash.to_string()),
+            role: ActiveValue::Set("user".to_string()),
+            ..ActiveModel::new()
+        };
+
+        user.insert(db).await
+    }
+}
