@@ -65,7 +65,7 @@ where
                 return Err(actix_web::error::ErrorUnauthorized(models::ApiResponse::<()> {
                     success: false,
                     data: None,
-                    message: Some("Invalid authorization header".to_string()),
+                    message: Some("Auth fail, Please relgin".to_string()),
                 }));
             }
 

@@ -24,6 +24,7 @@ uuid = { version = "1.4.1", features = ["serde", "v4","v7"] }
 env_logger = "0.10.0"
 log = "0.4.20"
 regex = "1.9.6"
+backtrace = "0.3.69"
 strum = "0.26.2"
 strum_macros = "0.26.2"
 sea-query = "0.32.6"

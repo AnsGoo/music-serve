@@ -1970,6 +1970,7 @@ name = "music-server"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "backtrace",
  "bcrypt",
  "chrono",
  "dotenv",

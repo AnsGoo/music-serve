@@ -2,6 +2,7 @@ use actix_web::{web};
 use super::handlers;
 use crate::middlewares::auth::AuthMiddleware;
 
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")

@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, HttpRequest, HttpMessage};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -73,4 +73,9 @@ pub fn is_valid_password(password: &str) -> bool {
     password.chars().any(|c| c.is_uppercase()) &&
     password.chars().any(|c| c.is_lowercase()) &&
     password.chars().any(|c| c.is_ascii_digit())
+}
+
+// 从请求中获取用户ID
+pub fn get_user_id_from_request(req: &HttpRequest) -> Option<String> {
+    req.extensions().get::<String>().cloned()
 }
