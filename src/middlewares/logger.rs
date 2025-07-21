@@ -1,4 +1,4 @@
-use actix_web::{dev::{Transform, Service, ServiceRequest, ServiceResponse}, Error};
+use actix_web::{dev::{Service, ServiceRequest, ServiceResponse, Transform}, Error, HttpMessage};
 use std::rc::Rc;
 use std::future::{Future, Ready};
 use std::pin::Pin;
@@ -67,11 +67,9 @@ where
 
                     // 记录成功请求
                     info!(
-                        "REQUEST_LOG: time={}, method={}, path={}, user_id={:?}, status={}, duration={}ms",
-                        Utc::now().to_rfc3339(),
+                        "{} {} {} {}ms",
                         method,
                         path,
-                        user_id,
                         status_code,
                         duration
                     );
@@ -85,11 +83,9 @@ where
                     let stack_trace = format!("{:?}", backtrace);
 
                     error!(
-                        "REQUEST_LOG: time={}, method={}, path={}, user_id={:?}, status=500, duration={}ms, error={}, stack_trace={}",
-                        Utc::now().to_rfc3339(),
+                        "{} {} 500 {}ms, error={}, stack_trace={}",
                         method,
                         path,
-                        user_id,
                         duration,
                         error_message,
                         stack_trace

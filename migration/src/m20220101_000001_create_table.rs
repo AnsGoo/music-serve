@@ -25,22 +25,22 @@ impl MigrationTrait for Migration {
                 .to_owned()
         ).await?;
 
-        // Create singers table
+        // Create artists table
         manager.create_table(
             Table::create()
-                .table(Singer::Table)
+                .table(Artist::Table)
                 .if_not_exists()
-                .col(ColumnDef::new(Singer::Id).uuid().primary_key())
-                .col(ColumnDef::new(Singer::Name).string().not_null())
-                .col(ColumnDef::new(Singer::Sex).string().null())
-                .col(ColumnDef::new(Singer::Nationality).string().null())
-                .col(ColumnDef::new(Singer::BirthDate).date().null())
-                .col(ColumnDef::new(Singer::Avatar).string().null())
-                .col(ColumnDef::new(Singer::CreatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
-                .col(ColumnDef::new(Singer::UpdatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
-                .col(ColumnDef::new(Singer::CreatedBy).string().not_null())
-                .col(ColumnDef::new(Singer::UpdatedBy).string().not_null())
-                .col(ColumnDef::new(Singer::DeleteFlag).boolean().not_null().default(false))
+                .col(ColumnDef::new(Artist::Id).uuid().primary_key())
+                .col(ColumnDef::new(Artist::Name).string().not_null())
+                .col(ColumnDef::new(Artist::Sex).string().null())
+                .col(ColumnDef::new(Artist::Nationality).string().null())
+                .col(ColumnDef::new(Artist::BirthDate).date().null())
+                .col(ColumnDef::new(Artist::Avatar).string().null())
+                .col(ColumnDef::new(Artist::CreatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
+                .col(ColumnDef::new(Artist::UpdatedAt).timestamp_with_time_zone().default(Expr::current_timestamp()).not_null())
+                .col(ColumnDef::new(Artist::CreatedBy).string().not_null())
+                .col(ColumnDef::new(Artist::UpdatedBy).string().not_null())
+                .col(ColumnDef::new(Artist::DeleteFlag).boolean().not_null().default(false))
                 .to_owned()
         ).await?;
 
@@ -50,7 +50,7 @@ impl MigrationTrait for Migration {
                 .table(Album::Table)
                 .if_not_exists()
                 .col(ColumnDef::new(Album::Id).uuid().primary_key())
-                .col(ColumnDef::new(Album::SingerId).uuid().not_null())
+                .col(ColumnDef::new(Album::ArtistId).uuid().not_null())
                 .col(ColumnDef::new(Album::Name).string().not_null())
                 .col(ColumnDef::new(Album::Description).string().null())
                 .col(ColumnDef::new(Album::CoverImage).string().null())
@@ -71,7 +71,7 @@ impl MigrationTrait for Migration {
                 .if_not_exists()
                 .col(ColumnDef::new(Song::Id).uuid().primary_key())
                 .col(ColumnDef::new(Song::AlbumId).uuid().not_null())
-                .col(ColumnDef::new(Song::SingerId).uuid().not_null())
+                .col(ColumnDef::new(Song::ArtistId).uuid().not_null())
                 .col(ColumnDef::new(Song::Title).string().not_null())
                 .col(ColumnDef::new(Song::Genre).string().null())
                 .col(ColumnDef::new(Song::Duration).integer().not_null())
@@ -95,8 +95,8 @@ impl MigrationTrait for Migration {
         // Drop albums table
         manager.drop_table(Table::drop().table(Album::Table).to_owned()).await?;
 
-        // Drop singers table
-        manager.drop_table(Table::drop().table(Singer::Table).to_owned()).await?;
+        // Drop artists table
+        manager.drop_table(Table::drop().table(Artist::Table).to_owned()).await?;
 
         // Drop users table
         manager.drop_table(Table::drop().table(User::Table).to_owned()).await?;
@@ -122,7 +122,7 @@ enum User {
 }
 
 #[derive(DeriveIden)]
-enum Singer {
+enum Artist {
     Table,
     Id,
     Name,
@@ -141,7 +141,7 @@ enum Singer {
 enum Album {
     Table,
     Id,
-    SingerId,
+    ArtistId,
     Name,
     Description,
     CoverImage,
@@ -159,7 +159,7 @@ enum Song {
     Table,
     Id,
     AlbumId,
-    SingerId,
+    ArtistId,
     Title,
     Genre,
     Duration,

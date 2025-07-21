@@ -17,6 +17,6 @@ body:json {
   }
 }
 
-vars:pre-request {
-  : 
+script:post-response {
+  bru.setVar('TOKEN','Bearer '+ res.body.data.token);
 }

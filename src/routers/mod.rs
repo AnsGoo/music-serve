@@ -1,11 +1,12 @@
 use actix_web::{web};
 use super::handlers;
-use crate::middlewares::auth::AuthMiddleware;
+use crate::middlewares::{auth::AuthMiddleware, logger::RequestLogger};
 
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
+             .wrap(RequestLogger)
             // 用户认证路由(不需要中间件)
             .service(web::resource("/auth/register").route(web::post().to(handlers::auth::register)))
             .service(web::resource("/auth/login").route(web::post().to(handlers::auth::login)))
@@ -14,9 +15,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::scope("")
                     .wrap(AuthMiddleware)
                     // 歌手管理路由
-                    .service(web::resource("/singers").route(web::get().to(handlers::singers::get_singers)))
-                    .service(web::resource("/singers/{id}").route(web::get().to(handlers::singers::get_singer_by_id)))
-                    .service(web::resource("/singers").route(web::post().to(handlers::singers::create_singer)))
+                    .service(web::resource("/artists").route(web::get().to(handlers::artists::get_artists)))
+                    .service(web::resource("/artists/{id}").route(web::get().to(handlers::artists::get_artist_by_id)))
+                    .service(web::resource("/artists").route(web::post().to(handlers::artists::create_artist)))
                     // 专辑管理路由
                     .service(web::resource("/albums").route(web::get().to(handlers::albums::get_albums)))
                     .service(web::resource("/albums/{id}").route(web::get().to(handlers::albums::get_album_by_id)))

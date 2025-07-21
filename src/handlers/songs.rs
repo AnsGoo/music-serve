@@ -81,7 +81,7 @@ pub async fn create_song(
     }
 
     // 验证歌手是否存在
-    let singer_exists = models::Singer::find_by_id(&state.config.db, data.singer_id)
+    let singer_exists = models::Artist::find_by_id(&state.config.db, data.singer_id)
         .await
         .map_err(|e| {
             log::error!("Database error: {:?}", e);

@@ -30,7 +30,7 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     // 关联歌手表
-    #[sea_orm(belongs_to = "super::singer::Entity", from = "Column::SingerId", to = "super::singer::Column::Id")]
+    #[sea_orm(belongs_to = "super::artist::Entity", from = "Column::SingerId", to = "super::artist::Column::Id")]
     Singer,
 }
 

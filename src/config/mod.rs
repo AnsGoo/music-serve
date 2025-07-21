@@ -37,7 +37,7 @@ impl AppConfig {
             .connect_timeout(Duration::from_secs(8))
             .acquire_timeout(Duration::from_secs(8))
             .idle_timeout(Duration::from_secs(8))
-            .sqlx_logging(false) // Disable SQLx log
+            .sqlx_logging(true) // Disable SQLx log
             .sqlx_logging_level(log::LevelFilter::Debug); // Or set SQLx log level   
 
         // 创建数据库连接

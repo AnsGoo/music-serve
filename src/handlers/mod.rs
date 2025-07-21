@@ -1,4 +1,4 @@
 pub mod albums;
 pub mod auth;
-pub mod singers;
+pub mod artists;
 pub mod songs;

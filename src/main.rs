@@ -1,11 +1,11 @@
-use actix_web::{web, App, HttpServer, middleware::Logger}; use middlewares::logger::RequestLogger;
-
+use actix_web::{web, App, HttpServer, middleware::Logger};
 mod config;
 mod handlers;
 mod models;
 mod routers;
 mod utils;
 mod middlewares; // 确保这个模块声明是公开的，并且位于正确的位置
+mod services;
 
 
 #[derive(Clone)]
@@ -19,12 +19,12 @@ async fn main() -> std::io::Result<()> {
     let app_state = AppState { config: config.clone() };
 
     println!("Server running on @ http://localhost:{}", config.port);
+    // let logger = Logger::default();
 
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
-            .wrap(Logger::default())
-            .wrap(RequestLogger)
+            .wrap(Logger::default().log_level(log::Level::Debug))
             .configure(routers::configure)
     })
     .bind(format!("0.0.0.0:{}", config.port))?

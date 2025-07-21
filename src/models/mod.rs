@@ -3,8 +3,8 @@
 pub mod user;
 pub use user::{User, RegisterRequest, LoginRequest, JwtResponse, ApiResponse};
 
-pub mod singer;
-pub use singer::{Singer, CreateSingerRequest, SingerQueryParams};
+pub mod artist;
+pub use artist::{Artist, ArtistQueryParams,CreateArtistDataObject};
 
 pub mod album;
 pub use album::{Album, CreateAlbumRequest, AlbumQueryParams};

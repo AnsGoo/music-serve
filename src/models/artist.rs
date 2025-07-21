@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 // 定义歌手表实体
 #[derive(Debug, Clone, Serialize, Deserialize, DeriveEntityModel, PartialEq)]
-#[sea_orm(table_name = "singer")]
+#[sea_orm(table_name = "artist")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
@@ -47,7 +47,7 @@ impl sea_orm::ActiveModelBehavior for ActiveModel {
 
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
-pub struct CreateSingerRequest {
+pub struct CreateArtistDataObject {
     pub name: String,
     pub nationality: Option<String>,
     pub birth_date: Option<String>,
@@ -58,7 +58,7 @@ pub struct CreateSingerRequest {
 
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
-pub struct SingerQueryParams {
+pub struct ArtistQueryParams {
     pub id: Uuid,
     pub name: Option<String>,
     pub nationality: Option<String>,
@@ -68,19 +68,20 @@ pub struct SingerQueryParams {
 }
 
 
-// 重命名为Singer以保持兼容性
-pub type Singer = Model;
+// 重命名为Artist以保持兼容性
+pub type Artist = Model;
 
 
-impl Singer {
+impl Artist {
     // 创建新歌手
-    pub async fn create(db: &DatabaseConnection, request: &CreateSingerRequest) -> Result<Self, DbErr> {
+    pub async fn create(db: &DatabaseConnection, data: &CreateArtistDataObject) -> Result<Self, DbErr> {
         let model = ActiveModel {
-            name: ActiveValue::Set(request.name.clone()),
-            nationality: ActiveValue::Set(request.nationality.clone()),
-            birth_date: ActiveValue::Set(request.birth_date.as_ref().and_then(|d| Date::parse_from_str(d, "%Y-%m-%d").ok())),
-            avatar: ActiveValue::Set(request.avatar.clone()),
-            sex: ActiveValue::Set(request.sex.clone()), // 默认值为 None
+            name: ActiveValue::Set(data.name.clone()),
+            nationality: ActiveValue::Set(data.nationality.clone()),
+            birth_date: ActiveValue::Set(data.birth_date.as_ref().and_then(|d| Date::parse_from_str(d, "%Y-%m-%d").ok())),
+            avatar: ActiveValue::Set(data.avatar.clone()),
+            sex: ActiveValue::Set(data.sex.clone()), // 默认值为 None
+            created_by: ActiveValue::Set(data.created_by.clone()),
             ..ActiveModelTrait::default()
 
         };
@@ -90,7 +91,7 @@ impl Singer {
     pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Option<Self>, DbErr> {
         Entity::find_by_id(id).one(db).await
     }
-    pub async fn find_all(db: &DatabaseConnection, params: &SingerQueryParams) -> Result<Vec<Self>, DbErr> {
+    pub async fn find_all(db: &DatabaseConnection, params: &ArtistQueryParams) -> Result<Vec<Self>, DbErr> {
         let mut query = Entity::find().order_by_desc(Column::UpdatedAt).filter(Column::DeleteFlag.eq(false));
 
         if let Some(name) = &params.name {
