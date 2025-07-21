@@ -74,8 +74,8 @@ API接口测试文件位于`bruno/`目录下，可使用Bruno客户端导入测�
 主要API端点：
 - POST /api/auth/register - 用户注册
 - POST /api/auth/login - 用户登录
-- GET /api/singers - 获取歌手列表
-- POST /api/singers - 创建歌手
+- GET /api/artists - 获取歌手列表
+- POST /api/artists - 创建歌手
 - GET /api/albums - 获取专辑列表
 - POST /api/albums - 创建专辑
 - GET /api/songs - 获取歌曲列表

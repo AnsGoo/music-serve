@@ -6,7 +6,6 @@ use std::task::{Context, Poll};
 use std::time::Instant;
 use log::{info, error};
 use crate::utils::get_user_id_from_request;
-use chrono::Utc;
 use backtrace::Backtrace;
 // 请求日志中间件
 pub struct RequestLogger;
@@ -49,7 +48,7 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let service = Rc::clone(&self.service);
         let start_time = Instant::now();
-        let user_id = get_user_id_from_request(&req.request());
+        let _user_id = get_user_id_from_request(&req.request());
         let method = req.method().to_string();
         let path = req.path().to_string();
 

@@ -9,7 +9,7 @@ use uuid::Uuid;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub singer_id: Uuid,
+    pub artist_id: Uuid,
     #[sea_orm(column_type = "Text", indexed, nullable)]
     pub name: String,
     pub description: Option<String>,
@@ -30,8 +30,8 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     // 关联歌手表
-    #[sea_orm(belongs_to = "super::artist::Entity", from = "Column::SingerId", to = "super::artist::Column::Id")]
-    Singer,
+    #[sea_orm(belongs_to = "super::artist::Entity", from = "Column::ArtistId", to = "super::artist::Column::Id")]
+    Artist,
 }
 
 // 为ActiveModel实现ActiveModelBehavior
@@ -52,7 +52,7 @@ pub type Album = Model;
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
 pub struct CreateAlbumRequest {
-    pub singer_id: Uuid,
+    pub artist_id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub cover_image: Option<String>,
@@ -63,7 +63,7 @@ pub struct CreateAlbumRequest {
 // 专辑查询参数
 #[derive(Debug, Deserialize)]
 pub struct AlbumQueryParams {
-    pub singer_id: Option<Uuid>,
+    pub artist_id: Option<Uuid>,
     pub name: Option<String>,
     pub release_date: Option<NaiveDate>,
     pub page: Option<u32>,
@@ -75,7 +75,7 @@ impl Album {
     // 创建新专辑
     pub async fn create(db: &DatabaseConnection, request: &CreateAlbumRequest) -> Result<Self, DbErr> {
         let album = ActiveModel {
-            singer_id: ActiveValue::Set(request.singer_id),
+            artist_id: ActiveValue::Set(request.artist_id),
             name: ActiveValue::Set(request.name.clone()),
             description: ActiveValue::Set(request.description.clone()),
             cover_image: ActiveValue::Set(request.cover_image.clone()),
@@ -100,8 +100,8 @@ impl Album {
         let mut query = Entity::find().order_by_desc(Column::ReleaseDate).filter(Column::DeleteFlag.eq(false));
 
         // 添加筛选条件
-        if let Some(singer_id) = &params.singer_id {
-            query = query.filter(Column::SingerId.eq(*singer_id));
+        if let Some(artist_id) = &params.artist_id {
+            query = query.filter(Column::ArtistId.eq(*artist_id));
         }
 
         if let Some(name) = &params.name {

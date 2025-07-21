@@ -1,4 +1,4 @@
-use actix_web::{dev::{Transform, Service, ServiceRequest, ServiceResponse}, web, Error, HttpMessage}; use std::rc::Rc; use std::future::Ready; use std::pin::Pin; use std::task::{Context, Poll}; use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm}; use crate::models; use crate::models::ApiResponse; use crate::handlers::auth::Claims; use crate::AppState;
+use actix_web::{dev::{Transform, Service, ServiceRequest, ServiceResponse}, web, Error, HttpMessage}; use std::rc::Rc; use std::future::Ready; use jsonwebtoken::{Algorithm}; use crate::models; use crate::utils::Claims; use crate::AppState;
 
 // JWT验证中间件
 pub struct AuthMiddleware;

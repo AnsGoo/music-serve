@@ -1,20 +1,30 @@
 use actix_web::{web, HttpResponse, Responder};
+use super::super::{models, AppState, services};
+use crate::services::artists::model::ArtistQueryViewObject;
 
-use super::super::{models, AppState};
-
-// 获取歌手列表（支持按姓名和国籍筛选）
+// 获取歌手列表
 pub async fn get_artists(
-    query: web::Query<models::ArtistQueryParams>,
+    query: web::Query<ArtistQueryViewObject>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let artists = models::Artist::find_all(&state.config.db, &query)
+    // 将ViewObject转换为DataObject
+    let data_query = models::ArtistQueryParams {
+        id: query.id,
+        name: query.name.clone(),
+        nationality: query.genre.clone(),
+        sex: None,
+        page: query.page.map(|p| p as u64),
+        page_size: query.limit.map(|l| l as u64),
+    };
+
+    let artists = services::artists::get_artists_service(data_query, &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
-                message: Some("Failed to fetch artists".to_string()),
+                message: Some(format!("Failed to fetch artists: {:?}", e)),
             })
         })?;
 
@@ -30,14 +40,14 @@ pub async fn get_artist_by_id(
     artist_id: web::Path<uuid::Uuid>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let artist = models::Artist::find_by_id(&state.config.db, artist_id.into_inner())
+    let artist = services::artists::get_artist_by_id_service(artist_id.into_inner(), &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
-                message: Some("Failed to fetch artist".to_string()),
+                message: Some(format!("Failed to fetch artist: {:?}", e)),
             })
         })?;
 
@@ -57,17 +67,28 @@ pub async fn get_artist_by_id(
 
 // 创建新歌手
 pub async fn create_artist(
-    data: web::Json<models::CreateArtistDataObject>,
+    data: web::Json<services::artists::model::CreateArtistViewObject>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let artist = models::Artist::create(&state.config.db, &data)
+    // 将ViewObject转换为DataObject
+    // 将ViewObject转换为DataObject
+    let data_object = models::CreateArtistDataObject {
+        name: data.name.clone(),
+        nationality: data.nationality.clone(),
+        birth_date: data.birth_date.clone(),
+        avatar: data.avatar.clone(),
+        sex: data.sex.clone(),
+        created_by: "system".to_string(),
+    };
+
+    let artist = services::artists::create_artist_service(data_object, &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
-                message: Some("Failed to create artist".to_string()),
+                message: Some(format!("Failed to create artist: {:?}", e)),
             })
         })?;
 

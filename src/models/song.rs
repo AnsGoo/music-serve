@@ -11,10 +11,10 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub album_id: Uuid,
-    pub singer_id: Uuid,
+    pub artist_id: Uuid,
     pub title: String,
     pub genre: Option<String>,
-    pub duration: i32,
+    pub duration: u32,
     pub quality: String,
     pub file_path: String,
     #[sea_orm(indexed)]
@@ -33,15 +33,15 @@ pub enum Relation {
     #[sea_orm(belongs_to = "super::album::Entity", from = "Column::AlbumId", to = "super::album::Column::Id")]
     Album,
     // 关联歌手表
-    #[sea_orm(belongs_to = "super::artist::Entity", from = "Column::SingerId", to = "super::artist::Column::Id")]
-    Singer,
+    #[sea_orm(belongs_to = "super::artist::Entity", from = "Column::ArtistId", to = "super::artist::Column::Id")]
+    Artist,
 }
 
 // 为Model实现ActiveModelBehavior
 impl sea_orm::ActiveModelBehavior for ActiveModel {
     fn new() -> Self {
         Self {
-            id: ActiveValue::Set(Uuid::new_v4()),
+            id: ActiveValue::Set(Uuid::now_v7()),
             created_at: ActiveValue::Set(Utc::now()),
             updated_at: ActiveValue::Set(Utc::now()),
             delete_flag: ActiveValue::Set(false),
@@ -57,10 +57,10 @@ pub type Song = Model;
 #[derive(Debug, Deserialize)]
 pub struct CreateSongRequest {
     pub album_id: Uuid,
-    pub singer_id: Uuid,
+    pub artist_id: Uuid,
     pub title: String,
     pub genre: Option<String>,
-    pub duration: i32,
+    pub duration: u32,
     pub quality: String,
     pub file_path: String,
 }
@@ -69,7 +69,7 @@ pub struct CreateSongRequest {
 #[derive(Debug, Deserialize)]
 pub struct SongQueryParams {
     pub album_id: Option<Uuid>,
-    pub singer_id: Option<Uuid>,
+    pub artist_id: Option<Uuid>,
     pub genre: Option<String>,
     pub quality: Option<String>,
     pub page: Option<u64>,
@@ -82,7 +82,7 @@ impl Song {
     pub async fn create(db: &DatabaseConnection, request: &CreateSongRequest) -> Result<Self, DbErr> {
         let song = ActiveModel {
             album_id: ActiveValue::Set(request.album_id),
-            singer_id: ActiveValue::Set(request.singer_id),
+            artist_id: ActiveValue::Set(request.artist_id),
             title: ActiveValue::Set(request.title.clone()),
             genre: ActiveValue::Set(request.genre.clone()),
             duration: ActiveValue::Set(request.duration),
@@ -112,8 +112,8 @@ impl Song {
             query = query.filter(Column::AlbumId.eq(album_id.to_owned()));
         }
 
-        if let Some(singer_id) = &params.singer_id {
-            query = query.filter(Column::SingerId.eq(singer_id.to_owned()));
+        if let Some(artist_id) = &params.artist_id {
+            query = query.filter(Column::ArtistId.eq(artist_id.to_owned()));
         }
 
         if let Some(genre) = &params.genre {

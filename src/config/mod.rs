@@ -1,5 +1,3 @@
-use tracing::Level;
-use tracing_subscriber;
 use dotenv::dotenv;
 use sea_orm::{ ConnectOptions, Database, DatabaseConnection};
 use std::{env, time::Duration};

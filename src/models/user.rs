@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
-use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter, QueryResult, DatabaseConnection};
+use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter, DatabaseConnection};
 use sea_orm::prelude::*;
 use uuid::Uuid;
 
@@ -60,6 +60,15 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+// 创建用户请求
+#[derive(Debug, Deserialize)]
+pub struct CreateUserRequest {
+    pub username: String,
+    pub password_hash: String,
+    pub email: Option<String>,
+    pub nickname: Option<String>,
+}
+
 // JWT响应
 #[derive(Debug, Serialize)]
 pub struct JwtResponse {
@@ -84,7 +93,7 @@ impl<T: Serialize> std::fmt::Display for ApiResponse<T> {
 
 // 为User模型添加数据访问方法
 impl User {
-    // 根据邮箱查找用户
+    // 根据用户名查找用户
     pub async fn find_by_username(db: &DatabaseConnection, username: &str) -> Result<Option<Self>, DbErr> {
         Entity::find()
             .filter(Column::Username.eq(username)).filter(Column::DeleteFlag.eq(false))
@@ -92,16 +101,24 @@ impl User {
             .await
     }
     
+    // 根据邮箱查找用户
+    pub async fn find_by_email(db: &DatabaseConnection, email: &str) -> Result<Option<Self>, DbErr> {
+        Entity::find()
+            .filter(Column::Email.eq(email)).filter(Column::DeleteFlag.eq(false))
+            .one(db)
+            .await
+    }
 
     // 创建新用户
-    pub async fn create(db: &DatabaseConnection, request: &RegisterRequest, password_hash: &str) -> Result<Self, DbErr> {
-        let user = ActiveModel {
-            username: ActiveValue::Set(request.username.clone()),
-            password_hash: ActiveValue::Set(password_hash.to_string()),
+    pub async fn create(db: &DatabaseConnection, data: &CreateUserRequest) -> Result<Self, DbErr> {
+        let model = ActiveModel {
+            username: ActiveValue::Set(data.username.clone()),
+            password_hash: ActiveValue::Set(data.password_hash.clone()),
+            email: ActiveValue::Set(data.email.clone()),
+            nickname: ActiveValue::Set(data.nickname.clone()),
             role: ActiveValue::Set("user".to_string()),
-            ..ActiveModel::new()
+            ..ActiveModelTrait::default()
         };
-
-        user.insert(db).await
+        model.insert(db).await
     }
 }

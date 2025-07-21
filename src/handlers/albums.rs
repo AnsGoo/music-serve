@@ -1,17 +1,28 @@
 use actix_web::{web, HttpResponse, Responder};
 // 移除SQLx引用
 
+use chrono::NaiveDate;
 use super::super::{models, AppState};
+use crate::services::{self, albums::model::AlbumQueryViewObject};
 
 // 获取专辑列表（支持按歌手、名称和发行日期筛选）
 pub async fn get_albums(
-    query: web::Query<models::AlbumQueryParams>,
+    query: web::Query<AlbumQueryViewObject>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let albums = models::Album::find_all(&state.config.db, &query)
+    // 将ViewObject转换为DataObject
+    let data_object = models::AlbumQueryParams {
+        artist_id: query.artist_id,
+        name: query.name.clone(),
+        release_date: query.release_year.map(|year| NaiveDate::from_ymd_opt(year, 1, 1).unwrap_or_default()),
+        page: query.page.map(|p| p as u32),
+        page_size: query.limit.map(|l| l as u32),
+    };
+
+    let albums = services::albums::get_albums_service(data_object, &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
@@ -31,65 +42,58 @@ pub async fn get_album_by_id(
     album_id: web::Path<uuid::Uuid>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let album = models::Album::find_by_id(&state.config.db, album_id.into_inner())
+    let album_id = album_id.into_inner();
+
+    let album = services::albums::get_album_by_id_service(album_id, &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
+            let message = match e.to_string().as_str() {
+                "Album not found" => e.to_string(),
+                _ => "Failed to fetch album".to_string(),
+            };
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
-                message: Some("Failed to fetch album".to_string()),
+                message: Some(message),
             })
         })?;
 
-    Ok(match album {
-        Some(album) => HttpResponse::Ok().json(models::ApiResponse {
-            success: true,
-            data: Some(album),
-            message: Some("Album fetched successfully".to_string()),
-        }),
-        None => HttpResponse::NotFound().json(models::ApiResponse::<()> {
-            success: false,
-            data: None,
-            message: Some("Album not found".to_string()),
-        }),
-    })
+    Ok(HttpResponse::Ok().json(models::ApiResponse {
+        success: true,
+        data: Some(album),
+        message: Some("Album fetched successfully".to_string()),
+    }))
 }
 
 // 创建新专辑
 pub async fn create_album(
-    data: web::Json<models::CreateAlbumRequest>,
+    data: web::Json<services::albums::model::CreateAlbumViewObject>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    // 验证歌手是否存在
-    let singer_exists = models::Artist::find_by_id(&state.config.db, data.singer_id)
+    // 将ViewObject转换为DataObject
+    let data_object = models::CreateAlbumRequest {
+        name: data.name.clone(),
+        artist_id: data.artist_id,
+        cover_image: Some(data.cover_image.clone()),
+        release_date: data.release_date,
+        description: data.description.clone(),
+        genre: None,
+
+    };
+
+    let album = services::albums::create_album_service(data_object, &state)
         .await
         .map_err(|e| {
-            log::error!("Database error: {:?}", e);
+            log::error!("Service error: {:?}", e);
+            let message = match e.to_string().as_str() {
+                "Artist_ not found" => e.to_string(),
+                _ => "Failed to create album".to_string(),
+            };
             actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
                 success: false,
                 data: None,
-                message: Some("Failed to check singer existence".to_string()),
-            })
-        })?;
-
-    if singer_exists.is_none() {
-        return Ok(HttpResponse::BadRequest().json(models::ApiResponse::<()> {
-                success: false,
-                data: None,
-                message: Some("Singer not found".to_string()),
-            }));
-    }
-
-    // 创建专辑
-    let album = models::Album::create(&state.config.db, &data)
-        .await
-        .map_err(|e| {
-            log::error!("Database error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
-                success: false,
-                data: None,
-                message: Some("Failed to create album".to_string()),
+                message: Some(message),
             })
         })?;
 

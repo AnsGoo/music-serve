@@ -1,7 +1,7 @@
 // 导出所有模型模块
 // 导出实体和相关类型
 pub mod user;
-pub use user::{User, RegisterRequest, LoginRequest, JwtResponse, ApiResponse};
+pub use user::{User, CreateUserRequest, ApiResponse};
 
 pub mod artist;
 pub use artist::{Artist, ArtistQueryParams,CreateArtistDataObject};
