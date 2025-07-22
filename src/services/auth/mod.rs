@@ -58,7 +58,7 @@ pub async fn login_service(
     let expiration = Utc::now() + Duration::seconds(3600); // 1 hour expiration
     let claims = Claims {
         sub: user.id.to_string(),
-        email: user.username.clone(),
+        username: user.username.clone(),
         exp: expiration.timestamp() as i64,
     };
 
@@ -72,9 +72,13 @@ pub async fn login_service(
     Ok(AuthResponseViewObject {
         user_id: user.id,
         username: user.username,
+        nickname: user.nickname,
+        email: user.email,
+        role: Some(user.role),
         access_token: token,
         token_type: "bearer".to_string(),
         expires_in: 3600, // 1 hour in seconds
+        avatar: None
     })
 }
 
@@ -82,22 +86,13 @@ pub async fn login_service(
 pub async fn register_service(
     data: RegisterViewObject,
     state: &web::Data<AppState>,
-) -> Result<AuthResponseViewObject, AuthServiceError> {
+) -> Result<LoginResponseViewObject, AuthServiceError> {
     // 检查用户名是否已存在
     let existing_user = models::User::find_by_username(&state.config.db, &data.username)
         .await
         .map_err(AuthServiceError::DatabaseError)?;
 
     if existing_user.is_some() {
-        return Err(AuthServiceError::UserAlreadyExists);
-    }
-
-    // 检查邮箱是否已存在
-    let existing_email = models::User::find_by_email(&state.config.db, &data.email)
-        .await
-        .map_err(AuthServiceError::DatabaseError)?;
-
-    if existing_email.is_some() {
         return Err(AuthServiceError::UserAlreadyExists);
     }
 
@@ -109,8 +104,6 @@ pub async fn register_service(
     let user_data = models::CreateUserRequest {
         username: data.username.clone(),
         password_hash,
-        email: Some(data.email),
-        nickname: data.nickname,
     };
 
     // 创建用户
@@ -122,7 +115,7 @@ pub async fn register_service(
     let expiration = Utc::now() + Duration::seconds(3600);
     let claims = Claims {
         sub: user.id.to_string(),
-        email: user.username.clone(),
+        username: user.username.clone(),
         exp: expiration.timestamp(),
     };
 
@@ -133,7 +126,7 @@ pub async fn register_service(
     )
     .map_err(AuthServiceError::JwtError)?;
 
-    Ok(AuthResponseViewObject {
+    Ok(LoginResponseViewObject {
         user_id: user.id,
         username: user.username,
         access_token: token,

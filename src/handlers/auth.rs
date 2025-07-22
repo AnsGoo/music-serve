@@ -1,7 +1,4 @@
 use actix_web::{web, HttpResponse, Responder};
-use jsonwebtoken::{Algorithm, encode, EncodingKey,Header};
-use uuid::Uuid;
-use super::super::utils::Claims;
 use super::super::{models, AppState, services};
 use crate::services::auth::model::LoginViewObject;
 
@@ -57,16 +54,4 @@ pub async fn login(
         data: Some(auth_response),
         message: Some("Login successful".to_string()),
     }))
-}
-
-// 生成JWT令牌
-fn generate_jwt(user_id: Uuid, secret: &str, expires_at: i64) -> Result<String, jsonwebtoken::errors::Error> {
-    let claims = Claims {
-        sub: user_id.to_string(),
-        email: "".to_string(),
-        exp: expires_at,
-    };
-
-    let header = Header::new(Algorithm::HS256);
-    encode(&header, &claims, &EncodingKey::from_secret(secret.as_bytes()))
 }

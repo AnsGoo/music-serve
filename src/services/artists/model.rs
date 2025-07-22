@@ -11,9 +11,10 @@ pub struct CreateArtistViewObject {
 
 #[derive(Debug, Deserialize)]
 pub struct ArtistQueryViewObject {
-    pub id: uuid::Uuid,
+    pub id: Option<uuid::Uuid>,
     pub name: Option<String>,
-    pub genre: Option<String>,
+    pub nationality: Option<String>,
+    pub sex: Option<String>,
     pub page: Option<u64>,
     pub limit: Option<u64>,
 }
@@ -23,9 +24,9 @@ pub struct ArtistDetailViewObject {
     pub id: uuid::Uuid,
     pub name: String,
     pub bio: String,
-    pub genre: String,
     pub birth_date: Option<chrono::NaiveDate>,
-    pub avatar_url: String,
+    pub sex: Option<String>,
+    pub avatar_url: Option<String>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }

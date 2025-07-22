@@ -35,9 +35,9 @@ pub async fn get_artists_service(
               id: artist.id,
               name: artist.name,
               bio: artist.nationality.clone().unwrap_or_default(),
-              genre: "".to_string(),
               birth_date: Some(artist.birth_date.unwrap_or_default()),
-              avatar_url: artist.avatar.clone().unwrap_or_default(),
+              avatar_url: Some(artist.avatar.clone().unwrap_or_default()),
+              sex: Some(artist.sex.clone().unwrap_or_default()),
               created_at: artist.created_at.naive_utc(),
               updated_at: artist.updated_at.naive_utc(),
           })
@@ -59,9 +59,9 @@ pub async fn get_artist_by_id_service(
         id: artist.id,
         name: artist.name,
         bio: artist.nationality.clone().unwrap_or_default(),
-        genre: "".to_string(),
         birth_date: Some(artist.birth_date.unwrap_or_default()),
-        avatar_url: artist.avatar.clone().unwrap_or_default(),
+        avatar_url: Some(artist.avatar.clone().unwrap_or_default()),
+        sex: Some(artist.sex.clone().unwrap_or_default()),
         created_at: artist.created_at.naive_utc(),
         updated_at: artist.updated_at.naive_utc(),
     }))
@@ -81,10 +81,12 @@ pub async fn create_artist_service(
         id: artist.id,
         name: artist.name,
         bio: artist.nationality.clone().unwrap_or_default(),
-        genre: "".to_string(),
         birth_date: Some(artist.birth_date.unwrap_or_default()),
-        avatar_url: artist.avatar.clone().unwrap_or_default(),
+        avatar_url: Some(artist.avatar.clone().unwrap_or_default()),
+
         created_at: artist.created_at.naive_utc(),
         updated_at: artist.updated_at.naive_utc(),
+        sex: Some(artist.sex.clone().unwrap_or_default()),
+
     })
 }

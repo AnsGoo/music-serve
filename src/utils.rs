@@ -13,7 +13,7 @@ pub const JWT_EXPIRATION_SECONDS: i64 = 86400; // 24小时
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: String, // 用户ID
-    pub email: String,
+    pub username: String,
     pub exp: i64,    // 过期时间
 }
 
@@ -27,7 +27,7 @@ pub fn generate_jwt(user: &User, secret: &str) -> Result<String, Box<dyn std::er
 
     let claims = Claims {
         sub: user.id.to_string(),
-        email: user.username.clone(),
+        username: user.username.clone(),
         exp: expiration,
     };
 

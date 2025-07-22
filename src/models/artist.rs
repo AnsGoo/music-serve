@@ -59,7 +59,7 @@ pub struct CreateArtistDataObject {
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
 pub struct ArtistQueryParams {
-    pub id: Uuid,
+    pub id: Option<Uuid>,
     pub name: Option<String>,
     pub nationality: Option<String>,
     pub sex: Option<String>,
@@ -82,7 +82,8 @@ impl Artist {
             avatar: ActiveValue::Set(data.avatar.clone()),
             sex: ActiveValue::Set(data.sex.clone()), // 默认值为 None
             created_by: ActiveValue::Set(data.created_by.clone()),
-            ..ActiveModelTrait::default()
+            updated_by: ActiveValue::Set(data.created_by.clone()),
+            ..ActiveModel::new()
 
         };
         model.insert(db).await
@@ -104,7 +105,10 @@ impl Artist {
         if let Some(sex) = &params.sex {
             query = query.filter(Column::Sex.eq(sex));
         }
-          let page = params.page.unwrap_or(1) as u64;
+         if let Some(id) = &params.id {
+            query = query.filter(Column::Id.eq(*id));
+        }
+        let page = params.page.unwrap_or(1) as u64;
         let page_size = params.page_size.unwrap_or(20) as u64;
         let offset = ((page - 1) * page_size) as u64;
         query.limit(page_size).offset(offset).all(db).await

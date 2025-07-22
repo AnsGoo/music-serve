@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder};
+use actix_web::{web, HttpResponse, Responder, HttpRequest, HttpMessage};
 use super::super::{models, AppState, services};
 use crate::services::artists::model::ArtistQueryViewObject;
 
@@ -9,10 +9,10 @@ pub async fn get_artists(
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
     let data_query = models::ArtistQueryParams {
-        id: query.id,
+        id: query.id.clone(),
         name: query.name.clone(),
-        nationality: query.genre.clone(),
-        sex: None,
+        nationality: query.nationality.clone(),
+        sex: query.sex.clone(),
         page: query.page.map(|p| p as u64),
         page_size: query.limit.map(|l| l as u64),
     };
@@ -69,6 +69,7 @@ pub async fn get_artist_by_id(
 pub async fn create_artist(
     data: web::Json<services::artists::model::CreateArtistViewObject>,
     state: web::Data<AppState>,
+    req: HttpRequest,
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
     // 将ViewObject转换为DataObject
@@ -78,7 +79,7 @@ pub async fn create_artist(
         birth_date: data.birth_date.clone(),
         avatar: data.avatar.clone(),
         sex: data.sex.clone(),
-        created_by: "system".to_string(),
+        created_by: req.extensions().get::<uuid::Uuid>().cloned().map(|user_id| user_id.to_string()).unwrap_or("system".to_string()),
     };
 
     let artist = services::artists::create_artist_service(data_object, &state)

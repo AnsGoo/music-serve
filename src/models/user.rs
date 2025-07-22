@@ -65,8 +65,6 @@ pub struct LoginRequest {
 pub struct CreateUserRequest {
     pub username: String,
     pub password_hash: String,
-    pub email: Option<String>,
-    pub nickname: Option<String>,
 }
 
 // JWT响应
@@ -114,10 +112,8 @@ impl User {
         let model = ActiveModel {
             username: ActiveValue::Set(data.username.clone()),
             password_hash: ActiveValue::Set(data.password_hash.clone()),
-            email: ActiveValue::Set(data.email.clone()),
-            nickname: ActiveValue::Set(data.nickname.clone()),
             role: ActiveValue::Set("user".to_string()),
-            ..ActiveModelTrait::default()
+            ..ActiveModel::new()
         };
         model.insert(db).await
     }
