@@ -37,7 +37,7 @@ pub async fn login_service(
     state: &web::Data<AppState>,
 ) -> Result<AuthResponseViewObject, AuthServiceError> {
     // 查询用户
-    let user = models::User::find_by_username(&state.config.db, &data.username)
+    let user = state.config.user_repo.find_by_username(&data.username)
         .await
         .map_err(AuthServiceError::DatabaseError)?;
 
@@ -88,7 +88,7 @@ pub async fn register_service(
     state: &web::Data<AppState>,
 ) -> Result<LoginResponseViewObject, AuthServiceError> {
     // 检查用户名是否已存在
-    let existing_user = models::User::find_by_username(&state.config.db, &data.username)
+    let existing_user = state.config.user_repo.find_by_username(&data.username)
         .await
         .map_err(AuthServiceError::DatabaseError)?;
 
@@ -107,7 +107,7 @@ pub async fn register_service(
     };
 
     // 创建用户
-    let user = models::User::create(&state.config.db, &user_data)
+    let user = state.config.user_repo.create(&user_data)
         .await
         .map_err(AuthServiceError::DatabaseError)?;
 

@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse, Responder, HttpRequest, HttpMessage};
 use super::super::{models, AppState, services};
 use crate::services::artists::model::ArtistQueryViewObject;
+use std::sync::Arc;
 
 // 获取歌手列表
 pub async fn get_artists(
@@ -17,7 +18,7 @@ pub async fn get_artists(
         page_size: query.limit.map(|l| l as u64),
     };
 
-    let artists = services::artists::get_artists_service(data_query, &state)
+    let artists = services::artists::get_artists_service(data_query, state.config.artist_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -40,7 +41,7 @@ pub async fn get_artist_by_id(
     artist_id: web::Path<uuid::Uuid>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let artist = services::artists::get_artist_by_id_service(artist_id.into_inner(), &state)
+    let artist = services::artists::get_artist_by_id_service(artist_id.into_inner(), state.config.artist_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -79,10 +80,10 @@ pub async fn create_artist(
         birth_date: data.birth_date.clone(),
         avatar: data.avatar.clone(),
         sex: data.sex.clone(),
-        created_by: req.extensions().get::<uuid::Uuid>().cloned().map(|user_id| user_id.to_string()).unwrap_or("system".to_string()),
+        created_by: req.extensions_mut().get::<String>().cloned().unwrap_or("system".to_string()),
     };
 
-    let artist = services::artists::create_artist_service(data_object, &state)
+    let artist = services::artists::create_artist_service(data_object, state.config.artist_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);

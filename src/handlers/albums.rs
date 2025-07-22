@@ -19,7 +19,7 @@ pub async fn get_albums(
         page_size: query.limit.map(|l| l as u32),
     };
 
-    let albums = services::albums::get_albums_service(data_object, &state)
+    let albums = services::albums::get_albums_service(data_object, state.config.album_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -44,7 +44,7 @@ pub async fn get_album_by_id(
 ) -> Result<impl Responder, actix_web::Error> {
     let album_id = album_id.into_inner();
 
-    let album = services::albums::get_album_by_id_service(album_id, &state)
+    let album = services::albums::get_album_by_id_service(album_id, state.config.album_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -82,7 +82,7 @@ pub async fn create_album(
 
     };
 
-    let album = services::albums::create_album_service(data_object, &state)
+    let album = services::albums::create_album_service(data_object, state.config.album_repo.clone(), state.config.artist_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);

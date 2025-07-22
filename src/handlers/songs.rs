@@ -17,7 +17,7 @@ pub async fn get_songs(
         page_size: query.limit.map(|l| l as u64),
     };
 
-    let songs = services::songs::get_songs_service(data_query, &state)
+    let songs = services::songs::get_songs_service(data_query, state.config.song_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -40,7 +40,7 @@ pub async fn get_song_by_id(
     song_id: web::Path<uuid::Uuid>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
-    let song = services::songs::get_song_by_id_service(song_id.into_inner(), &state)
+    let song = services::songs::get_song_by_id_service(song_id.into_inner(), state.config.song_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
@@ -81,7 +81,7 @@ pub async fn create_song(
         file_path: data.file_path.clone(),
     };
 
-    let song = services::songs::create_song_service(data_object, &state)
+    let song = services::songs::create_song_service(data_object, state.config.song_repo.clone(), state.config.album_repo.clone(), state.config.artist_repo.clone())
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);

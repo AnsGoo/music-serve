@@ -1,40 +1,46 @@
 pub mod model;
-use crate::{models, AppState};
+use crate::models;
 use sea_orm::DbErr; 
 use uuid::Uuid;
+use std::sync::Arc;
+use crate::models::song::SongRepository;
+use crate::models::album::AlbumRepository;
+use crate::models::artist::ArtistRepository;
 
 // 获取歌曲列表服务
 pub async fn get_songs_service(
     query: models::SongQueryParams,
-    state: &AppState
+    song_repo: Arc<dyn SongRepository + Send + Sync>
 ) -> Result<Vec<models::Song>, DbErr> {
-    models::Song::find_all(&state.config.db, &query).await
+    song_repo.find_all(&query).await
 }
 
 // 根据ID获取歌曲详情服务
 pub async fn get_song_by_id_service(
     song_id: Uuid,
-    state: &AppState
+    song_repo: Arc<dyn SongRepository + Send + Sync>
 ) -> Result<Option<models::Song>, DbErr> {
-    models::Song::find_by_id(&state.config.db, song_id).await
+    song_repo.find_by_id(song_id).await
 }
 
 // 创建歌曲服务
 pub async fn create_song_service(
     data: models::CreateSongRequest,
-    state: &AppState
+    song_repo: Arc<dyn SongRepository + Send + Sync>,
+    album_repo: Arc<dyn AlbumRepository + Send + Sync>,
+    artist_repo: Arc<dyn ArtistRepository + Send + Sync>
 ) -> Result<models::Song, DbErr> {
     // 验证专辑是否存在
-    let album_exists = models::Album::find_by_id(&state.config.db, data.album_id).await?;
+    let album_exists = album_repo.find_by_id(data.album_id).await?;
     if album_exists.is_none() {
         return Err(DbErr::Custom("Album not found".to_string()));
     }
 
     // 验证歌手是否存在
-    let artist_exists = models::Artist::find_by_id(&state.config.db, data.artist_id).await?;
+    let artist_exists = artist_repo.find_by_id(data.artist_id).await?;
     if artist_exists.is_none() {
         return Err(DbErr::Custom("Artist not found".to_string()));
     }
 
-    models::Song::create(&state.config.db, &data).await
+    song_repo.create(&data).await
 }

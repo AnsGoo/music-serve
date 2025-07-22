@@ -1,8 +1,11 @@
-use chrono::{ DateTime, Utc};
+use chrono::{ DateTime, Utc, NaiveDate};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelTrait, ActiveValue,DeriveEntityModel, QueryOrder, QuerySelect};
 use sea_orm::entity::prelude::*;
 use uuid::Uuid;
+use std::sync::Arc;
+// 暂时移除DbAccess导入，将在后续步骤中重新设计依赖关系
+use async_trait::async_trait;
 
 
 // 定义歌手表实体
@@ -68,50 +71,74 @@ pub struct ArtistQueryParams {
 }
 
 
+// 定义歌手仓库trait
+#[async_trait::async_trait]
+pub trait ArtistRepository {
+    async fn create(&self, data: &CreateArtistDataObject) -> Result<Artist, DbErr>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Artist>, DbErr>;
+    async fn find_all(&self, params: &ArtistQueryParams) -> Result<Vec<Artist>, DbErr>;
+}
+
 // 重命名为Artist以保持兼容性
 pub type Artist = Model;
 
 
-impl Artist {
-    // 创建新歌手
-    pub async fn create(db: &DatabaseConnection, data: &CreateArtistDataObject) -> Result<Self, DbErr> {
-        let model = ActiveModel {
+// SeaORM实现的歌手仓库
+pub struct SeaOrmArtistRepository {
+    db: Arc<DatabaseConnection>,
+}
+
+impl SeaOrmArtistRepository {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+        Self {
+            db,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl ArtistRepository for SeaOrmArtistRepository {
+    async fn create(&self, data: &CreateArtistDataObject) -> Result<Artist, DbErr> {
+        let artist = ActiveModel {
             name: ActiveValue::Set(data.name.clone()),
             nationality: ActiveValue::Set(data.nationality.clone()),
-            birth_date: ActiveValue::Set(data.birth_date.as_ref().and_then(|d| Date::parse_from_str(d, "%Y-%m-%d").ok())),
+            birth_date: ActiveValue::Set(data.birth_date.clone().map(|date| NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap_or_default())),
             avatar: ActiveValue::Set(data.avatar.clone()),
-            sex: ActiveValue::Set(data.sex.clone()), // 默认值为 None
+            sex: ActiveValue::Set(data.sex.clone()),
             created_by: ActiveValue::Set(data.created_by.clone()),
             updated_by: ActiveValue::Set(data.created_by.clone()),
             ..ActiveModel::new()
-
         };
-        model.insert(db).await
+
+        artist.insert(&*self.db).await
     }
 
-    pub async fn find_by_id(db: &DatabaseConnection, id: Uuid) -> Result<Option<Self>, DbErr> {
-        Entity::find_by_id(id).one(db).await
-    }
-    pub async fn find_all(db: &DatabaseConnection, params: &ArtistQueryParams) -> Result<Vec<Self>, DbErr> {
-        let mut query = Entity::find().order_by_desc(Column::UpdatedAt).filter(Column::DeleteFlag.eq(false));
+    async fn find_all(&self, params: &ArtistQueryParams) -> Result<Vec<Artist>, DbErr> {
+        let mut query = Entity::find();
 
+        if let Some(id) = params.id {
+            query = query.filter(Column::Id.eq(id));
+        }
         if let Some(name) = &params.name {
             query = query.filter(Column::Name.contains(name));
         }
-        
         if let Some(nationality) = &params.nationality {
             query = query.filter(Column::Nationality.eq(nationality));
         }
         if let Some(sex) = &params.sex {
             query = query.filter(Column::Sex.eq(sex));
         }
-         if let Some(id) = &params.id {
-            query = query.filter(Column::Id.eq(*id));
+
+        // 分页处理
+        if let Some(page) = params.page {
+            let page_size = params.page_size.unwrap_or(10);
+            query = query.offset((page - 1) * page_size).limit(page_size);
         }
-        let page = params.page.unwrap_or(1) as u64;
-        let page_size = params.page_size.unwrap_or(20) as u64;
-        let offset = ((page - 1) * page_size) as u64;
-        query.limit(page_size).offset(offset).all(db).await
+
+        query.all(&*self.db).await
     }
-    
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Artist>, DbErr> {
+        Entity::find_by_id(id).one(&*self.db).await
+    }
 }

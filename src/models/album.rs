@@ -2,6 +2,8 @@ use chrono::{DateTime, Utc, NaiveDate};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelBehavior,ActiveValue, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect, DatabaseConnection, DeriveRelation, EnumIter, DeriveEntityModel, prelude::*};
 use uuid::Uuid;
+use std::sync::Arc;
+use async_trait::async_trait;
 
 // 定义专辑表实体
 #[derive(Debug, Clone, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -43,6 +45,76 @@ impl ActiveModelBehavior for ActiveModel {
             updated_at: ActiveValue::Set(Utc::now()),
             ..ActiveModelTrait::default()
         }
+    }
+}
+
+// 定义专辑仓库 trait
+#[async_trait::async_trait]
+pub trait AlbumRepository: Send + Sync {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Album>, DbErr>;
+    async fn create(&self, request: &CreateAlbumRequest) -> Result<Album, DbErr>;
+    async fn find_all(&self, params: &AlbumQueryParams) -> Result<Vec<Album>, DbErr>;
+}
+
+// SeaORM 实现的专辑仓库
+pub struct SeaOrmAlbumRepository {
+    db: Arc<DatabaseConnection>,
+}
+
+impl SeaOrmAlbumRepository {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+        Self {
+            db,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl AlbumRepository for SeaOrmAlbumRepository {
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Album>, DbErr> {
+        Entity::find_by_id(id).one(&*self.db).await
+    }
+
+    async fn create(&self, request: &CreateAlbumRequest) -> Result<Album, DbErr> {
+        let album = ActiveModel {
+            artist_id: ActiveValue::Set(request.artist_id),
+            name: ActiveValue::Set(request.name.clone()),
+            description: ActiveValue::Set(request.description.clone()),
+            cover_image: ActiveValue::Set(request.cover_image.clone()),
+            genre: ActiveValue::Set(request.genre.clone()),
+            release_date: ActiveValue::Set(request.release_date),
+            ..ActiveModel::new()
+        };
+
+        album.insert(&*self.db).await
+    }
+
+    async fn find_all(&self, params: &AlbumQueryParams) -> Result<Vec<Album>, DbErr> {
+        let mut query = Entity::find().order_by_desc(Column::ReleaseDate).filter(Column::DeleteFlag.eq(false));
+
+        // 添加筛选条件
+        if let Some(artist_id) = &params.artist_id {
+            query = query.filter(Column::ArtistId.eq(*artist_id));
+        }
+
+        if let Some(name) = &params.name {
+            query = query.filter(Column::Name.like(format!("%{}%", name)));
+        }
+
+        if let Some(release_date) = &params.release_date {
+            query = query.filter(Column::ReleaseDate.eq(*release_date));
+        }
+
+        // 处理分页
+        let page = params.page.unwrap_or(1) as u64;
+        let page_size = params.page_size.unwrap_or(20) as u64;
+        let offset = ((page - 1) * page_size) as u64;
+
+        query
+            .limit(page_size)
+            .offset(offset)
+            .all(&*self.db)
+            .await
     }
 }
 

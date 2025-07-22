@@ -1,8 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
-use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, EntityTrait, QueryFilter, DatabaseConnection};
+use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter};
 use sea_orm::prelude::*;
 use uuid::Uuid;
+use std::sync::Arc;
+use async_trait::async_trait;
 
 // 定义用户表实体
 #[derive(Debug, Clone, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -45,6 +47,14 @@ impl ActiveModelBehavior for ActiveModel {
 
 // 重命名为User以保持兼容性
 pub type User = Model;
+
+// 定义用户仓库trait
+#[async_trait]
+pub trait UserRepository: Send + Sync {
+    async fn find_by_username(&self, username: &str) -> Result<Option<User>, DbErr>;
+    async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbErr>;
+    async fn create(&self, data: &CreateUserRequest) -> Result<User, DbErr>;
+}
 
 // 用户注册请求
 #[derive(Debug, Deserialize)]
@@ -89,7 +99,47 @@ impl<T: Serialize> std::fmt::Display for ApiResponse<T> {
     }
 }
 
-// 为User模型添加数据访问方法
+// SeaORM实现的用户仓库
+pub struct SeaOrmUserRepository {
+    db: Arc<DatabaseConnection>,
+}
+
+impl SeaOrmUserRepository {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+        Self {
+            db,
+        }
+    }
+}
+
+#[async_trait]
+impl UserRepository for SeaOrmUserRepository {
+    async fn find_by_username(&self, username: &str) -> Result<Option<User>, DbErr> {
+        Entity::find()
+            .filter(Column::Username.eq(username)).filter(Column::DeleteFlag.eq(false))
+            .one(&*self.db)
+            .await
+    }
+
+    async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbErr> {
+        Entity::find()
+            .filter(Column::Email.eq(email)).filter(Column::DeleteFlag.eq(false))
+            .one(&*self.db)
+            .await
+    }
+
+    async fn create(&self, data: &CreateUserRequest) -> Result<User, DbErr> {
+        let model = ActiveModel {
+            username: ActiveValue::Set(data.username.clone()),
+            password_hash: ActiveValue::Set(data.password_hash.clone()),
+            role: ActiveValue::Set("user".to_string()),
+            ..ActiveModel::new()
+        };
+        model.insert(&*self.db).await
+    }
+}
+
+// 为User模型保留旧的数据访问方法（逐步迁移）
 impl User {
     // 根据用户名查找用户
     pub async fn find_by_username(db: &DatabaseConnection, username: &str) -> Result<Option<Self>, DbErr> {

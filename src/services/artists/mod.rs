@@ -1,7 +1,7 @@
 pub mod model;
-use crate::{models, AppState};
+use std::sync::Arc;
+use crate::models::artist::{ArtistRepository, CreateArtistDataObject, ArtistQueryParams};
 use crate::services::artists::model::ArtistDetailViewObject;
-use actix_web::web;
 use std::fmt;
 
 #[derive(Debug)]
@@ -21,10 +21,10 @@ impl fmt::Display for ArtistServiceError {
 
 /// 获取歌手列表服务
 pub async fn get_artists_service(
-    query: models::ArtistQueryParams,
-    state: &web::Data<AppState>,
+    query: ArtistQueryParams,
+    artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
 ) -> Result<Vec<model::ArtistDetailViewObject>, ArtistServiceError> {
-    let artists = models::Artist::find_all(&state.config.db, &query)
+    let artists = artist_repo.find_all(&query)
         .await
         .map_err(ArtistServiceError::DatabaseError)?;
 
@@ -49,9 +49,9 @@ pub async fn get_artists_service(
 /// 根据ID获取歌手详情服务
 pub async fn get_artist_by_id_service(
     artist_id: uuid::Uuid,
-    state: &web::Data<AppState>,
+    artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
 ) -> Result<Option<ArtistDetailViewObject>, ArtistServiceError> {
-    let artist = models::Artist::find_by_id(&state.config.db, artist_id)
+    let artist = artist_repo.find_by_id(artist_id)
         .await
         .map_err(ArtistServiceError::DatabaseError)?;
 
@@ -69,11 +69,11 @@ pub async fn get_artist_by_id_service(
 
 /// 创建歌手服务
 pub async fn create_artist_service(
-    data: models::CreateArtistDataObject,
-    state: &web::Data<AppState>,
+    data: CreateArtistDataObject,
+    artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
 ) -> Result<ArtistDetailViewObject, ArtistServiceError> {
     // 创建歌手
-    let artist = models::Artist::create(&state.config.db, &data)
+    let artist = artist_repo.create(&data)
         .await
         .map_err(ArtistServiceError::DatabaseError)?;
 
@@ -83,7 +83,7 @@ pub async fn create_artist_service(
         bio: artist.nationality.clone().unwrap_or_default(),
         birth_date: Some(artist.birth_date.unwrap_or_default()),
         avatar_url: Some(artist.avatar.clone().unwrap_or_default()),
-
+        
         created_at: artist.created_at.naive_utc(),
         updated_at: artist.updated_at.naive_utc(),
         sex: Some(artist.sex.clone().unwrap_or_default()),

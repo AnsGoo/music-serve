@@ -31,6 +31,7 @@ sea-query = "0.32.6"
 utoipa="5"
 utoipa-swagger-ui = { version = "5", features = ["actix-web"] }
 actix-cors = "0.6.4"
+async-trait = "0.1.77"
 
 
 [scripts]

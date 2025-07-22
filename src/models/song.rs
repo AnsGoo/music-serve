@@ -2,7 +2,8 @@ use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, DeriveEntityModel, DeriveRelation, EntityTrait, EnumIter, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
-use sea_orm::entity::prelude::*; 
+use sea_orm::entity::prelude::*;
+use std::sync::Arc;
 
 // 定义歌曲表实体
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, DeriveEntityModel)]
@@ -47,6 +48,81 @@ impl sea_orm::ActiveModelBehavior for ActiveModel {
             delete_flag: ActiveValue::Set(false),
             ..ActiveModelTrait::default()
         }
+    }
+}
+
+// 定义歌曲仓库 trait
+#[async_trait::async_trait]
+pub trait SongRepository: Send + Sync {
+    async fn create(&self, request: &CreateSongRequest) -> Result<Song, DbErr>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Song>, DbErr>;
+    async fn find_all(&self, params: &SongQueryParams) -> Result<Vec<Song>, DbErr>;
+}
+
+// SeaORM 实现的歌曲仓库
+pub struct SeaOrmSongRepository {
+    db: Arc<DatabaseConnection>,
+}
+
+impl SeaOrmSongRepository {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+        Self {
+            db,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl SongRepository for SeaOrmSongRepository {
+    async fn create(&self, request: &CreateSongRequest) -> Result<Song, DbErr> {
+        let song = ActiveModel {
+            album_id: ActiveValue::Set(request.album_id),
+            artist_id: ActiveValue::Set(request.artist_id),
+            title: ActiveValue::Set(request.title.clone()),
+            genre: ActiveValue::Set(request.genre.clone()),
+            duration: ActiveValue::Set(request.duration),
+            quality: ActiveValue::Set(request.quality.clone()),
+            file_path: ActiveValue::Set(request.file_path.clone()),
+            ..ActiveModel::new()
+        };
+
+        song.insert(&*self.db).await
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<Song>, DbErr> {
+        Entity::find_by_id(id).one(&*self.db).await
+    }
+
+    async fn find_all(&self, params: &SongQueryParams) -> Result<Vec<Song>, DbErr> {
+        let mut query = Entity::find().order_by_desc(Column::CreatedAt);
+
+        // 添加筛选条件
+        if let Some(album_id) = &params.album_id {
+            query = query.filter(Column::AlbumId.eq(*album_id));
+        }
+
+        if let Some(artist_id) = &params.artist_id {
+            query = query.filter(Column::ArtistId.eq(*artist_id));
+        }
+
+        if let Some(genre) = &params.genre {
+            query = query.filter(Column::Genre.eq(genre));
+        }
+
+        if let Some(quality) = &params.quality {
+            query = query.filter(Column::Quality.eq(quality));
+        }
+
+        // 处理分页
+        let page = params.page.unwrap_or(1);
+        let page_size = params.page_size.unwrap_or(20);
+        let offset = (page - 1) * page_size;
+
+        query
+            .limit(page_size)
+            .offset(offset)
+            .all(&*self.db)
+            .await
     }
 }
 

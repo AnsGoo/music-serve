@@ -1,8 +1,10 @@
 pub mod model;
 use self::model::*;
-use crate::{models, AppState};
-use actix_web::web;
+use crate::models;
 use std::fmt;
+use std::sync::Arc;
+use crate::models::album::AlbumRepository;
+use crate::models::artist::ArtistRepository;
 
 #[derive(Debug)]
 pub enum AlbumServiceError {
@@ -24,9 +26,9 @@ impl fmt::Display for AlbumServiceError {
 /// 获取专辑列表服务
 pub async fn get_albums_service(
     query: models::AlbumQueryParams,
-    state: &web::Data<AppState>,
+    album_repo: Arc<dyn AlbumRepository + Send + Sync>
 ) -> Result<Vec<AlbumDetailViewObject>, AlbumServiceError> {
-    let albums = models::Album::find_all(&state.config.db, &query)
+    let albums = album_repo.find_all(&query)
         .await
         .map_err(AlbumServiceError::DatabaseError)?;
 
@@ -51,9 +53,9 @@ pub async fn get_albums_service(
 /// 根据ID获取专辑详情服务
 pub async fn get_album_by_id_service(
     album_id: uuid::Uuid,
-    state: &web::Data<AppState>,
+    album_repo: Arc<dyn AlbumRepository + Send + Sync>
 ) -> Result<Option<AlbumDetailViewObject>, AlbumServiceError> {
-    let album = models::Album::find_by_id(&state.config.db, album_id)
+    let album = album_repo.find_by_id(album_id)
         .await
         .map_err(AlbumServiceError::DatabaseError)?;
 
@@ -72,10 +74,11 @@ pub async fn get_album_by_id_service(
 /// 创建专辑服务
 pub async fn create_album_service(
     data: models::CreateAlbumRequest,
-    state: &web::Data<AppState>,
+    album_repo: Arc<dyn AlbumRepository + Send + Sync>,
+    artist_repo: Arc<dyn ArtistRepository + Send + Sync>
 ) -> Result<AlbumDetailViewObject, AlbumServiceError> {
     // 验证歌手是否存在
-    let artist_exists = models::Artist::find_by_id(&state.config.db, data.artist_id)
+    let artist_exists = artist_repo.find_by_id(data.artist_id)
         .await
         .map_err(AlbumServiceError::DatabaseError)?;
 
@@ -84,7 +87,7 @@ pub async fn create_album_service(
     }
 
     // 创建专辑
-    let album = models::Album::create(&state.config.db, &data)
+    let album = album_repo.create(&data)
         .await
         .map_err(AlbumServiceError::DatabaseError)?;
 

@@ -1,12 +1,20 @@
 use dotenv::dotenv;
 use sea_orm::{ ConnectOptions, Database, DatabaseConnection};
-use std::{env, time::Duration};
+use std::{env, time::Duration, sync::Arc};
+use crate::models::artist::{ArtistRepository, SeaOrmArtistRepository};
+use crate::models::song::{SongRepository, SeaOrmSongRepository};
+use crate::models::album::{AlbumRepository, SeaOrmAlbumRepository};
+use crate::models::user::{UserRepository, SeaOrmUserRepository};
 
 #[derive(Clone)]
 pub struct AppConfig {
     pub db: DatabaseConnection,
     pub jwt_secret: String,
     pub port: String,
+    pub artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
+    pub song_repo: Arc<dyn SongRepository + Send + Sync>,
+    pub album_repo: Arc<dyn AlbumRepository + Send + Sync>,
+    pub user_repo: Arc<dyn UserRepository + Send + Sync>,
 }
 
 impl AppConfig {
@@ -41,10 +49,23 @@ impl AppConfig {
         // 创建数据库连接
   let db = Database::connect(opt).await.expect("Failed to connect to database");
 
+        // 创建歌手仓库实例
+        let artist_repo = Arc::new(SeaOrmArtistRepository::new(Arc::new(db.clone())));
+        // 创建歌曲仓库实例
+        let song_repo = Arc::new(SeaOrmSongRepository::new(Arc::new(db.clone())));
+        // 创建专辑仓库实例
+        let album_repo = Arc::new(SeaOrmAlbumRepository::new(Arc::new(db.clone())));
+        // 创建用户仓库实例
+        let user_repo = Arc::new(SeaOrmUserRepository::new(Arc::new(db.clone())));
+
         AppConfig {
             db,
             jwt_secret,
             port,
+            artist_repo,
+            song_repo,
+            album_repo,
+            user_repo,
         }
     }
 }
