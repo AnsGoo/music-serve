@@ -13,15 +13,13 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub username: String,
-    pub nickname: Option<String>,
+    pub nickname: Option<String>,   
     pub email: Option<String>,
     pub password_hash: String,
     pub role: String,
     #[sea_orm(indexed)]
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub created_at: DateTime<Utc>,
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
     #[sea_orm(indexed,default=false)]

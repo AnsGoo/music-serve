@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
-use chrono::{DateTime,Utc};
+use chrono::{DateTime,Local};
 
 /// 认证响应视图对象
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,8 +15,10 @@ pub struct UserResponseViewObject {
     pub email: Option<String>,
     pub role: String,
     pub created_by: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub created_at: DateTime<Local>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub updated_at: DateTime<Local>,
     pub updated_by: Option<String>,
 }
 

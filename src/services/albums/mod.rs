@@ -53,8 +53,8 @@ pub async fn get_albums_service(
             cover_image: album.cover_image.unwrap_or_default(),
             release_date: album.release_date,
             description: album.description,
-            created_at: album.created_at,
-            updated_at: album.updated_at,
+            created_at: album.created_at.into(),
+            updated_at: album.updated_at.into(),
         })
         .collect();
 
@@ -77,8 +77,8 @@ pub async fn get_album_by_id_service(
         cover_image: album.cover_image.unwrap_or_default(),
         release_date: album.release_date,
         description: album.description,
-        created_at: album.created_at,
-        updated_at: album.updated_at,
+        created_at: album.created_at.into(),
+        updated_at: album.updated_at.into(),
     }))
 }
 
@@ -109,7 +109,7 @@ pub async fn create_album_service(
         cover_image: album.cover_image.unwrap_or_default(),
         release_date: album.release_date,
         description: album.description,
-        created_at: album.created_at,
-        updated_at: album.updated_at,
+        created_at: album.created_at.into(),
+        updated_at: album.updated_at.into(),
     })
 }

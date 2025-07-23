@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, FixedOffset};
+use chrono::{DateTime, FixedOffset, Local, Utc};
 use serde::{Deserialize, Deserializer, Serializer};
 
 // 将UTC时间序列化为本地时间字符串 (默认使用东八区)
@@ -43,4 +43,13 @@ pub mod local_to_utc {
     {
         local_to_utc(deserializer)
     }
+}
+
+pub fn format_datetime<S>(datetime: &DateTime<Local>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    // 转换为东八区时间
+   let formatted = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+    serializer.serialize_str(&formatted)
 }

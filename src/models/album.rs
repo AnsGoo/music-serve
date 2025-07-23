@@ -1,11 +1,11 @@
-use chrono::{DateTime, Local, NaiveDate, Utc};
-use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Local, NaiveDate};
+use serde::{Deserialize};
 use sea_orm::{ActiveModelBehavior,ActiveValue, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect, DatabaseConnection, DeriveRelation, EnumIter, DeriveEntityModel, prelude::*};
 use uuid::Uuid;
 use std::sync::Arc;
 
 // 定义专辑表实体
-#[derive(Debug, Clone, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, DeriveEntityModel, Deserialize)]
 #[sea_orm(table_name = "album")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
@@ -19,10 +19,8 @@ pub struct Model {
     #[sea_orm(column_type = "DateTime", indexed)]
     pub release_date: NaiveDate,
     #[sea_orm(indexed)]
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub created_at: DateTime<Utc>,
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
     pub created_by: String,
     pub updated_by: String,
     #[sea_orm(indexed,default=false)]

@@ -1,4 +1,6 @@
-use serde::{Deserialize, Serialize}; use uuid::Uuid;
+use serde::{Deserialize, Serialize}; 
+use uuid::Uuid;
+use chrono::{DateTime, Local};
 
 // 歌曲查询视图对象
 #[derive(Debug, Deserialize, Serialize)]
@@ -39,6 +41,8 @@ pub struct SongDetailViewObject {
     pub quality: String,
     pub file_path: String,
     pub release_date: chrono::NaiveDate,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub created_at: DateTime<Local>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub updated_at: DateTime<Local>,
 }

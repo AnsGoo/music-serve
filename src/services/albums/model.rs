@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use chrono::NaiveDate;
+use chrono::{ DateTime, Local, NaiveDate };
 
 /// 专辑查询视图对象
 #[derive(Debug, Deserialize)]
@@ -53,7 +53,8 @@ pub struct AlbumDetailViewObject {
     /// 专辑描述
     pub description: Option<String>,
     /// 创建时间
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    /// 更新时间
-    pub updated_at: chrono::DateTime<chrono::Utc>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub created_at: DateTime<Local>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub updated_at: DateTime<Local>,
 }

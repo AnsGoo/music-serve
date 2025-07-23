@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, DeriveEntityModel, DeriveRelation, EntityTrait, EnumIter, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
@@ -19,10 +19,8 @@ pub struct Model {
     pub quality: String,
     pub file_path: String,
     #[sea_orm(indexed)]
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub created_at: DateTime<Utc>,
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
     pub created_by: String,
     pub updated_by: String,
     #[sea_orm(indexed,default=false)]

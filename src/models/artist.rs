@@ -18,10 +18,8 @@ pub struct Model {
     pub birth_date: Option<Date>,
     pub avatar: Option<String>,
     #[sea_orm(indexed)]
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub created_at: DateTime<Utc>,
-    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
-    pub updated_at: DateTime<Utc>,
+    pub created_at: DateTime<Local>,
+    pub updated_at: DateTime<Local>,
     pub created_by: String,
     pub updated_by: String,
     #[sea_orm(indexed,default=false)]

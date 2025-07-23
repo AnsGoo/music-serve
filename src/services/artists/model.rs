@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local };
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -30,6 +31,8 @@ pub struct ArtistDetailViewObject {
     pub birth_date: Option<chrono::NaiveDate>,
     pub sex: Option<String>,
     pub avatar_url: Option<String>,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub created_at: DateTime<Local>,
+    #[serde(serialize_with = "crate::utils::date_time::format_datetime")]
+    pub updated_at: DateTime<Local>,
 }
