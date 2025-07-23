@@ -4,8 +4,6 @@ use sea_orm::{ActiveModelTrait, ActiveValue,DeriveEntityModel, QueryOrder, Query
 use sea_orm::entity::prelude::*;
 use uuid::Uuid;
 use std::sync::Arc;
-// 暂时移除DbAccess导入，将在后续步骤中重新设计依赖关系
-use async_trait::async_trait;
 
 
 // 定义歌手表实体
@@ -50,7 +48,7 @@ impl sea_orm::ActiveModelBehavior for ActiveModel {
 
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
-pub struct CreateArtistDataObject {
+pub struct CreateArtistData {
     pub name: String,
     pub nationality: Option<String>,
     pub birth_date: Option<String>,
@@ -61,7 +59,7 @@ pub struct CreateArtistDataObject {
 
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
-pub struct ArtistQueryParams {
+pub struct ArtistQueryData {
     pub id: Option<Uuid>,
     pub name: Option<String>,
     pub nationality: Option<String>,
@@ -74,9 +72,9 @@ pub struct ArtistQueryParams {
 // 定义歌手仓库trait
 #[async_trait::async_trait]
 pub trait ArtistRepository {
-    async fn create(&self, data: &CreateArtistDataObject) -> Result<Artist, DbErr>;
+    async fn create(&self, data: &CreateArtistData) -> Result<Artist, DbErr>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Artist>, DbErr>;
-    async fn find_all(&self, params: &ArtistQueryParams) -> Result<Vec<Artist>, DbErr>;
+    async fn find_all(&self, params: &ArtistQueryData) -> Result<Vec<Artist>, DbErr>;
 }
 
 // 重命名为Artist以保持兼容性
@@ -98,7 +96,7 @@ impl SeaOrmArtistRepository {
 
 #[async_trait::async_trait]
 impl ArtistRepository for SeaOrmArtistRepository {
-    async fn create(&self, data: &CreateArtistDataObject) -> Result<Artist, DbErr> {
+    async fn create(&self, data: &CreateArtistData) -> Result<Artist, DbErr> {
         let artist = ActiveModel {
             name: ActiveValue::Set(data.name.clone()),
             nationality: ActiveValue::Set(data.nationality.clone()),
@@ -113,7 +111,7 @@ impl ArtistRepository for SeaOrmArtistRepository {
         artist.insert(&*self.db).await
     }
 
-    async fn find_all(&self, params: &ArtistQueryParams) -> Result<Vec<Artist>, DbErr> {
+    async fn find_all(&self, params: &ArtistQueryData) -> Result<Vec<Artist>, DbErr> {
         let mut query = Entity::find();
 
         if let Some(id) = params.id {

@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse, Responder};
 use crate::{models, AppState, services};
 use services::songs::model::SongQueryViewObject;
+use crate::handlers::ApiResponse;
 
 // 获取歌曲列表（支持按专辑、歌手、流派和音质筛选）
 pub async fn get_songs(
@@ -21,14 +22,14 @@ pub async fn get_songs(
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(format!("Failed to fetch songs: {:?}", e)),
             })
         })?;
 
-    Ok(HttpResponse::Ok().json(models::ApiResponse {
+    Ok(HttpResponse::Ok().json(ApiResponse {
         success: true,
         data: Some(songs),
         message: Some("Songs fetched successfully".to_string()),
@@ -44,7 +45,7 @@ pub async fn get_song_by_id(
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(format!("Failed to fetch song: {:?}", e)),
@@ -52,12 +53,12 @@ pub async fn get_song_by_id(
         })?;
 
     Ok(match song {
-        Some(song) => HttpResponse::Ok().json(models::ApiResponse {
+        Some(song) => HttpResponse::Ok().json(ApiResponse {
             success: true,
             data: Some(song),
             message: Some("Song fetched successfully".to_string()),
         }),
-        None => HttpResponse::NotFound().json(models::ApiResponse::<()> {
+        None => HttpResponse::NotFound().json(ApiResponse::<()> {
             success: false,
             data: None,
             message: Some("Song not found".to_string()),
@@ -89,14 +90,14 @@ pub async fn create_song(
                 "Album not found" | "Artist not found" => e.to_string(),
                 _ => "Failed to create song".to_string(),
             };
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(message),
             })
         })?;
 
-    Ok(HttpResponse::Created().json(models::ApiResponse {
+    Ok(HttpResponse::Created().json(ApiResponse {
         success: true,
         data: Some(song),
         message: Some("Song created successfully".to_string()),

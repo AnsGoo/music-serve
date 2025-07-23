@@ -30,8 +30,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     .service(web::resource("/songs")
                     .route(web::get().to(handlers::songs::get_songs))
                     .route(web::post().to(handlers::songs::create_song))
-                )
+                    )
                     .service(web::resource("/songs/{id}").route(web::get().to(handlers::songs::get_song_by_id)))
+                    .service(web::resource("/users").route(web::get().to(handlers::users::get_users)))
             )
     );
 }

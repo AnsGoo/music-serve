@@ -48,11 +48,7 @@ where
             // 获取应用状态
             let state = req.app_data::<web::Data<AppState>>()
                 .ok_or_else(|| {
-                    actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
-                        success: false,
-                        data: None,
-                        message: Some("Failed to get app state".to_string()),
-                    })
+                    actix_web::error::ErrorInternalServerError("Failed to get app state".to_string())
                 })?;
 
             // 从请求头中获取Authorization令牌
@@ -62,11 +58,7 @@ where
 
             // 检查令牌格式是否正确
             if !auth_header.starts_with("Bearer ") {
-                return Err(actix_web::error::ErrorUnauthorized(models::ApiResponse::<()> {
-                    success: false,
-                    data: None,
-                    message: Some("Auth fail, Please relgin".to_string()),
-                }));
+                return Err(actix_web::error::ErrorUnauthorized("Auth fail, Please relgin".to_string()));
             }
 
             // 提取令牌
@@ -79,11 +71,7 @@ where
                 &jsonwebtoken::Validation::new(Algorithm::HS256),
             ).map_err(|e| {
                 log::error!("JWT validation error: {:?}", e);
-                actix_web::error::ErrorUnauthorized(models::ApiResponse::<()> {
-                    success: false,
-                    data: None,
-                    message: Some("Invalid or expired token".to_string()),
-                })
+                actix_web::error::ErrorUnauthorized("Invalid or expired token".to_string())
             })?;
 
             // 将用户ID添加到请求扩展中

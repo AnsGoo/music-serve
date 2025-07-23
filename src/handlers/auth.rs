@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse, Responder};
 use super::super::{models, AppState, services};
 use crate::services::auth::model::LoginViewObject;
+use crate::handlers::ApiResponse;
 
 // 用户注册
 pub async fn register(
@@ -15,14 +16,14 @@ pub async fn register(
                 "Username already exists" => actix_web::http::StatusCode::BAD_REQUEST,
                 _ => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             };
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(e.to_string()),
             })
         })?;
 
-    Ok(HttpResponse::Created().json(models::ApiResponse {
+    Ok(HttpResponse::Created().json(ApiResponse {
         success: true,
         data: Some(auth_response),
         message: Some("User registered successfully".to_string()),
@@ -42,14 +43,14 @@ pub async fn login(
                 "Invalid username or password" => actix_web::http::StatusCode::UNAUTHORIZED,
                 _ => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
             };
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(e.to_string()),
             })
         })?;
 
-    Ok(HttpResponse::Ok().json(models::ApiResponse {
+    Ok(HttpResponse::Ok().json(ApiResponse {
         success: true,
         data: Some(auth_response),
         message: Some("Login successful".to_string()),

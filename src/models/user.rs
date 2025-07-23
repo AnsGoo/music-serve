@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
-use sea_orm::{ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter};
+use sea_orm::{ ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use sea_orm::prelude::*;
 use uuid::Uuid;
 use std::sync::Arc;
@@ -53,28 +53,43 @@ pub type User = Model;
 pub trait UserRepository: Send + Sync {
     async fn find_by_username(&self, username: &str) -> Result<Option<User>, DbErr>;
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbErr>;
-    async fn create(&self, data: &CreateUserRequest) -> Result<User, DbErr>;
+    async fn create(&self, data: &CreateUserData) -> Result<User, DbErr>;
+    async fn get_users(&self, query: &QueryUserData) -> Result<Vec<User>, DbErr>;
 }
 
 // 用户注册请求
 #[derive(Debug, Deserialize)]
-pub struct RegisterRequest {
+pub struct RegisterData {
     pub username: String,
     pub password: String,
 }
 
 // 用户登录请求
 #[derive(Debug, Deserialize)]
-pub struct LoginRequest {
+pub struct LoginData {
     pub username: String,
     pub password: String,
 }
 
 // 创建用户请求
 #[derive(Debug, Deserialize)]
-pub struct CreateUserRequest {
+pub struct CreateUserData {
     pub username: String,
     pub password_hash: String,
+}
+
+// 创建用户请求
+#[derive(Debug, Deserialize)]
+pub struct QueryUserData {
+    pub user_id: Option<Uuid>,
+    /// 用户名
+    pub username: Option<String>,
+    /// 昵称
+    pub nickname: Option<String>,
+    pub email: Option<String>,
+    pub role: Option<String>,
+    pub page: Option<u64>,
+    pub page_size: Option<u64>,
 }
 
 // JWT响应
@@ -82,21 +97,6 @@ pub struct CreateUserRequest {
 pub struct JwtResponse {
     pub token: String,
     pub expires_at: i64,
-}
-
-// API响应模型
-#[derive(Debug, Serialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub message: Option<String>,
-}
-
-// 为ApiResponse实现Display trait
-impl<T: Serialize> std::fmt::Display for ApiResponse<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}",  self.message.clone().expect("No message").to_string())
-    }
 }
 
 // SeaORM实现的用户仓库
@@ -128,7 +128,7 @@ impl UserRepository for SeaOrmUserRepository {
             .await
     }
 
-    async fn create(&self, data: &CreateUserRequest) -> Result<User, DbErr> {
+    async fn create(&self, data: &CreateUserData) -> Result<User, DbErr> {
         let model = ActiveModel {
             username: ActiveValue::Set(data.username.clone()),
             password_hash: ActiveValue::Set(data.password_hash.clone()),
@@ -136,6 +136,41 @@ impl UserRepository for SeaOrmUserRepository {
             ..ActiveModel::new()
         };
         model.insert(&*self.db).await
+    }
+    async fn get_users(&self, params: &QueryUserData) -> Result<Vec<User>, DbErr> {
+        let mut  query=  Entity::find()
+            .filter(Column::DeleteFlag.eq(false)).order_by_asc(Column::UpdatedAt);
+
+             // 添加筛选条件
+        if let Some(username) = &params.username {
+            query = query.filter(Column::Username.eq(username));
+        }
+         if let Some(id) = &params.user_id {
+            query = query.filter(Column::Id.eq(*id));
+        }
+
+        if let Some(nickname) = &params.nickname {
+            query = query.filter(Column::Nickname.contains(nickname));
+        }
+
+        if let Some(email) = &params.email {
+            query = query.filter(Column::Email.eq(email));
+        }
+
+        if let Some(role) = &params.role {
+            query = query.filter(Column::Role.eq(role));
+        }
+
+        // 处理分页
+        let page = params.page.unwrap_or(1);
+        let page_size = params.page_size.unwrap_or(20);
+        let offset = (page - 1) * page_size;
+
+        query
+            .limit(page_size)
+            .offset(offset)
+            .all(&*self.db)
+            .await
     }
 }
 
@@ -158,7 +193,7 @@ impl User {
     }
 
     // 创建新用户
-    pub async fn create(db: &DatabaseConnection, data: &CreateUserRequest) -> Result<Self, DbErr> {
+    pub async fn create(db: &DatabaseConnection, data: &CreateUserData) -> Result<Self, DbErr> {
         let model = ActiveModel {
             username: ActiveValue::Set(data.username.clone()),
             password_hash: ActiveValue::Set(data.password_hash.clone()),

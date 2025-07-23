@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse, Responder, HttpRequest, HttpMessage};
 use super::super::{models, AppState, services};
 use crate::services::artists::model::ArtistQueryViewObject;
-use std::sync::Arc;
+use crate::handlers::ApiResponse;
 
 // 获取歌手列表
 pub async fn get_artists(
@@ -9,7 +9,7 @@ pub async fn get_artists(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
-    let data_query = models::ArtistQueryParams {
+    let data_query = models::ArtistQueryData {
         id: query.id.clone(),
         name: query.name.clone(),
         nationality: query.nationality.clone(),
@@ -22,14 +22,14 @@ pub async fn get_artists(
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(format!("Failed to fetch artists: {:?}", e)),
             })
         })?;
 
-    Ok(HttpResponse::Ok().json(models::ApiResponse {
+    Ok(HttpResponse::Ok().json(ApiResponse {
         success: true,
         data: Some(artists),
         message: Some("Artists fetched successfully".to_string()),
@@ -45,7 +45,7 @@ pub async fn get_artist_by_id(
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(format!("Failed to fetch artist: {:?}", e)),
@@ -53,12 +53,12 @@ pub async fn get_artist_by_id(
         })?;
 
     Ok(match artist {
-        Some(artist) => HttpResponse::Ok().json(models::ApiResponse {
+        Some(artist) => HttpResponse::Ok().json(ApiResponse {
             success: true,
             data: Some(artist),
             message: Some("Artist fetched successfully".to_string()),
         }),
-        None => HttpResponse::NotFound().json(models::ApiResponse::<()> {
+        None => HttpResponse::NotFound().json(ApiResponse::<()> {
             success: false,
             data: None,
             message: Some("Artist not found".to_string()),
@@ -74,7 +74,7 @@ pub async fn create_artist(
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
     // 将ViewObject转换为DataObject
-    let data_object = models::CreateArtistDataObject {
+    let data_object = models::CreateArtistData {
         name: data.name.clone(),
         nationality: data.nationality.clone(),
         birth_date: data.birth_date.clone(),
@@ -87,14 +87,14 @@ pub async fn create_artist(
         .await
         .map_err(|e| {
             log::error!("Service error: {:?}", e);
-            actix_web::error::ErrorInternalServerError(models::ApiResponse::<()> {
+            actix_web::error::ErrorInternalServerError(ApiResponse::<()> {
                 success: false,
                 data: None,
                 message: Some(format!("Failed to create artist: {:?}", e)),
             })
         })?;
 
-    Ok(HttpResponse::Created().json(models::ApiResponse {
+    Ok(HttpResponse::Created().json(ApiResponse {
         success: true,
         data: Some(artist),
         message: Some("Artist created successfully".to_string()),

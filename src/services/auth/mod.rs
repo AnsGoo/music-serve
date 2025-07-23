@@ -101,7 +101,7 @@ pub async fn register_service(
         .map_err(|_| AuthServiceError::PasswordHashError)?;
 
     // 创建用户数据对象
-    let user_data = models::CreateUserRequest {
+    let user_data = models::CreateUserData {
         username: data.username.clone(),
         password_hash,
     };

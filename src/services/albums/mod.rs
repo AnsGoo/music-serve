@@ -25,7 +25,7 @@ impl fmt::Display for AlbumServiceError {
 
 /// 获取专辑列表服务
 pub async fn get_albums_service(
-    query: models::AlbumQueryParams,
+    query: models::AlbumQueryData,
     album_repo: Arc<dyn AlbumRepository + Send + Sync>
 ) -> Result<Vec<AlbumDetailViewObject>, AlbumServiceError> {
     let albums = album_repo.find_all(&query)
@@ -73,7 +73,7 @@ pub async fn get_album_by_id_service(
 
 /// 创建专辑服务
 pub async fn create_album_service(
-    data: models::CreateAlbumRequest,
+    data: models::CreateAlbumData,
     album_repo: Arc<dyn AlbumRepository + Send + Sync>,
     artist_repo: Arc<dyn ArtistRepository + Send + Sync>
 ) -> Result<AlbumDetailViewObject, AlbumServiceError> {

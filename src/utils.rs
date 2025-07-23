@@ -3,7 +3,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use super::models::{ApiResponse, User};
+use super::models::{User};
 use sea_orm::DbErr;
 
 // JWT相关常量
@@ -54,11 +54,7 @@ pub fn verify_jwt(token: &str, secret: &str) -> Result<Claims, Box<dyn std::erro
 // 处理数据库错误
 pub fn handle_db_error(e: DbErr) -> impl Responder {
     log::error!("Database error: {:?}", e);
-    HttpResponse::InternalServerError().json(ApiResponse::<()> {
-        success: false,
-        data: None,
-        message: Some("Database operation failed".to_string()),
-    })
+    HttpResponse::InternalServerError().json("Database operation failed".to_string())
 }
 
 // 验证电子邮件格式

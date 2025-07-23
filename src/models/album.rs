@@ -3,7 +3,6 @@ use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelBehavior,ActiveValue, ColumnTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect, DatabaseConnection, DeriveRelation, EnumIter, DeriveEntityModel, prelude::*};
 use uuid::Uuid;
 use std::sync::Arc;
-use async_trait::async_trait;
 
 // 定义专辑表实体
 #[derive(Debug, Clone, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -52,8 +51,8 @@ impl ActiveModelBehavior for ActiveModel {
 #[async_trait::async_trait]
 pub trait AlbumRepository: Send + Sync {
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Album>, DbErr>;
-    async fn create(&self, request: &CreateAlbumRequest) -> Result<Album, DbErr>;
-    async fn find_all(&self, params: &AlbumQueryParams) -> Result<Vec<Album>, DbErr>;
+    async fn create(&self, request: &CreateAlbumData) -> Result<Album, DbErr>;
+    async fn find_all(&self, params: &AlbumQueryData) -> Result<Vec<Album>, DbErr>;
 }
 
 // SeaORM 实现的专辑仓库
@@ -75,7 +74,7 @@ impl AlbumRepository for SeaOrmAlbumRepository {
         Entity::find_by_id(id).one(&*self.db).await
     }
 
-    async fn create(&self, request: &CreateAlbumRequest) -> Result<Album, DbErr> {
+    async fn create(&self, request: &CreateAlbumData) -> Result<Album, DbErr> {
         let album = ActiveModel {
             artist_id: ActiveValue::Set(request.artist_id),
             name: ActiveValue::Set(request.name.clone()),
@@ -89,7 +88,7 @@ impl AlbumRepository for SeaOrmAlbumRepository {
         album.insert(&*self.db).await
     }
 
-    async fn find_all(&self, params: &AlbumQueryParams) -> Result<Vec<Album>, DbErr> {
+    async fn find_all(&self, params: &AlbumQueryData) -> Result<Vec<Album>, DbErr> {
         let mut query = Entity::find().order_by_desc(Column::ReleaseDate).filter(Column::DeleteFlag.eq(false));
 
         // 添加筛选条件
@@ -123,7 +122,7 @@ pub type Album = Model;
 
 // 专辑创建请求
 #[derive(Debug, Deserialize)]
-pub struct CreateAlbumRequest {
+pub struct CreateAlbumData {
     pub artist_id: Uuid,
     pub name: String,
     pub description: Option<String>,
@@ -134,7 +133,7 @@ pub struct CreateAlbumRequest {
 
 // 专辑查询参数
 #[derive(Debug, Deserialize)]
-pub struct AlbumQueryParams {
+pub struct AlbumQueryData {
     pub artist_id: Option<Uuid>,
     pub name: Option<String>,
     pub release_date: Option<NaiveDate>,
@@ -145,7 +144,7 @@ pub struct AlbumQueryParams {
 // 为Album模型添加数据访问方法
 impl Album {
     // 创建新专辑
-    pub async fn create(db: &DatabaseConnection, request: &CreateAlbumRequest) -> Result<Self, DbErr> {
+    pub async fn create(db: &DatabaseConnection, request: &CreateAlbumData) -> Result<Self, DbErr> {
         let album = ActiveModel {
             artist_id: ActiveValue::Set(request.artist_id),
             name: ActiveValue::Set(request.name.clone()),
@@ -168,7 +167,7 @@ impl Album {
     }
 
     // 获取所有专辑（支持筛选和分页）
-    pub async fn find_all(db: &DatabaseConnection, params: &AlbumQueryParams) -> Result<Vec<Self>, DbErr> {
+    pub async fn find_all(db: &DatabaseConnection, params: &AlbumQueryData) -> Result<Vec<Self>, DbErr> {
         let mut query = Entity::find().order_by_desc(Column::ReleaseDate).filter(Column::DeleteFlag.eq(false));
 
         // 添加筛选条件

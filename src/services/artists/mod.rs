@@ -1,6 +1,6 @@
 pub mod model;
 use std::sync::Arc;
-use crate::models::artist::{ArtistRepository, CreateArtistDataObject, ArtistQueryParams};
+use crate::models::artist::{ArtistRepository, CreateArtistData, ArtistQueryData};
 use crate::services::artists::model::ArtistDetailViewObject;
 use std::fmt;
 
@@ -21,7 +21,7 @@ impl fmt::Display for ArtistServiceError {
 
 /// 获取歌手列表服务
 pub async fn get_artists_service(
-    query: ArtistQueryParams,
+    query: ArtistQueryData,
     artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
 ) -> Result<Vec<model::ArtistDetailViewObject>, ArtistServiceError> {
     let artists = artist_repo.find_all(&query)
@@ -69,7 +69,7 @@ pub async fn get_artist_by_id_service(
 
 /// 创建歌手服务
 pub async fn create_artist_service(
-    data: CreateArtistDataObject,
+    data: CreateArtistData,
     artist_repo: Arc<dyn ArtistRepository + Send + Sync>,
 ) -> Result<ArtistDetailViewObject, ArtistServiceError> {
     // 创建歌手
