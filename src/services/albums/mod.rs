@@ -1,10 +1,13 @@
 pub mod model;
+use chrono::NaiveDate;
+
 use self::model::*;
 use crate::models;
 use std::fmt;
 use std::sync::Arc;
 use crate::models::album::AlbumRepository;
 use crate::models::artist::ArtistRepository;
+use crate::models::AlbumQueryData;
 
 #[derive(Debug)]
 pub enum AlbumServiceError {
@@ -25,10 +28,18 @@ impl fmt::Display for AlbumServiceError {
 
 /// 获取专辑列表服务
 pub async fn get_albums_service(
-    query: models::AlbumQueryData,
+    query: AlbumQueryViewObject,
     album_repo: Arc<dyn AlbumRepository + Send + Sync>
 ) -> Result<Vec<AlbumDetailViewObject>, AlbumServiceError> {
-    let albums = album_repo.find_all(&query)
+
+    let data_object = models::AlbumQueryData {
+        artist_id: query.artist_id,
+        name: query.name.clone(),
+        release_date: query.release_year.map(|year| NaiveDate::from_ymd_opt(year, 1, 1).unwrap_or_default()),
+        page: query.page.map(|p| p as u32),
+        page_size: query.page_size.map(|l| l as u32),
+    };
+    let albums = album_repo.find_all(&data_object)
         .await
         .map_err(AlbumServiceError::DatabaseError)?;
 

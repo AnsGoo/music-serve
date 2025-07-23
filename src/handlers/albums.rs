@@ -11,12 +11,13 @@ pub async fn get_albums(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
-    let data_object = models::AlbumQueryData {
+    let data_object = AlbumQueryViewObject {
+        id: query.id,
         artist_id: query.artist_id,
         name: query.name.clone(),
-        release_date: query.release_year.map(|year| NaiveDate::from_ymd_opt(year, 1, 1).unwrap_or_default()),
+        release_year: query.release_year,
         page: query.page.map(|p| p as u32),
-        page_size: query.limit.map(|l| l as u32),
+        page_size: query.page_size.map(|l| l as u32),
     };
 
     let albums = services::albums::get_albums_service(data_object, state.config.album_repo.clone())

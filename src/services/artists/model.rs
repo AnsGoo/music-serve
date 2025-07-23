@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateArtistViewObject {
     pub name: String,
     pub nationality: Option<String>,
@@ -10,6 +11,7 @@ pub struct CreateArtistViewObject {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ArtistQueryViewObject {
     pub id: Option<uuid::Uuid>,
     pub name: Option<String>,
@@ -20,6 +22,7 @@ pub struct ArtistQueryViewObject {
 }
 
 #[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ArtistDetailViewObject {
     pub id: uuid::Uuid,
     pub name: String,

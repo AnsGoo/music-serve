@@ -3,7 +3,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use super::models::{User};
+use crate::models::{User};
 use sea_orm::DbErr;
 
 // JWT相关常量

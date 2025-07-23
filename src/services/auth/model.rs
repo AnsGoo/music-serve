@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 /// 登录请求视图对象
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginViewObject {
     /// 用户名
     pub username: String,
@@ -12,6 +13,7 @@ pub struct LoginViewObject {
 
 /// 注册请求视图对象
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RegisterViewObject {
     /// 用户名
     pub username: String,
@@ -21,6 +23,7 @@ pub struct RegisterViewObject {
 
 /// 认证响应视图对象
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthResponseViewObject {
     /// 用户ID
     pub user_id: Uuid,
@@ -34,12 +37,12 @@ pub struct AuthResponseViewObject {
     pub token_type: String,
     /// 过期时间(秒)
     pub expires_in: i64,
-    pub avatar: Option<String>,
     pub email: Option<String>,
     pub role: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginResponseViewObject {
     /// 用户ID
     pub user_id: Uuid,

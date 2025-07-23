@@ -4,6 +4,7 @@ use chrono::NaiveDate;
 
 /// 专辑查询视图对象
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AlbumQueryViewObject {
     /// 专辑ID
     pub id: Option<Uuid>,
@@ -16,11 +17,12 @@ pub struct AlbumQueryViewObject {
     /// 页码
     pub page: Option<u32>,
     /// 每页数量
-    pub limit: Option<u32>,
+    pub page_size: Option<u32>,
 }
 
 /// 创建专辑视图对象
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateAlbumViewObject {
     /// 专辑名称
     pub name: String,
@@ -36,6 +38,7 @@ pub struct CreateAlbumViewObject {
 
 /// 专辑详情视图对象
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AlbumDetailViewObject {
     /// 专辑ID
     pub id: Uuid,

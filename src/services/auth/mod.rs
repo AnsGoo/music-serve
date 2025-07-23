@@ -78,7 +78,6 @@ pub async fn login_service(
         access_token: token,
         token_type: "bearer".to_string(),
         expires_in: 3600, // 1 hour in seconds
-        avatar: None
     })
 }
 
