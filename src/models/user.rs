@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime, Local};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use sea_orm::prelude::*;
@@ -18,7 +18,9 @@ pub struct Model {
     pub password_hash: String,
     pub role: String,
     #[sea_orm(indexed)]
+    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
     pub created_at: DateTime<Utc>,
+    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
     pub updated_at: DateTime<Utc>,
     pub created_by: Option<String>,
     pub updated_by: Option<String>,
@@ -37,8 +39,8 @@ impl ActiveModelBehavior for ActiveModel {
        fn new() -> Self {
         Self {
             id: ActiveValue::Set(Uuid::now_v7()),
-            created_at: ActiveValue::Set(Utc::now().to_utc()),
-            updated_at: ActiveValue::Set(Utc::now().to_utc()),
+            created_at: ActiveValue::Set(Local::now().into()),
+            updated_at: ActiveValue::Set(Local::now().into()),
             delete_flag: ActiveValue::Set(false),
             ..ActiveModelTrait::default()
         }
@@ -55,20 +57,6 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, DbErr>;
     async fn create(&self, data: &CreateUserData) -> Result<User, DbErr>;
     async fn get_users(&self, query: &QueryUserData) -> Result<Vec<User>, DbErr>;
-}
-
-// 用户注册请求
-#[derive(Debug, Deserialize)]
-pub struct RegisterData {
-    pub username: String,
-    pub password: String,
-}
-
-// 用户登录请求
-#[derive(Debug, Deserialize)]
-pub struct LoginData {
-    pub username: String,
-    pub password: String,
 }
 
 // 创建用户请求

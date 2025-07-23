@@ -1,4 +1,4 @@
-use chrono::{ DateTime, Utc, NaiveDate};
+use chrono::{ DateTime, Local, NaiveDate, Utc};
 use serde::{Serialize, Deserialize};
 use sea_orm::{ActiveModelTrait, ActiveValue,DeriveEntityModel, QueryOrder, QuerySelect};
 use sea_orm::entity::prelude::*;
@@ -18,7 +18,9 @@ pub struct Model {
     pub birth_date: Option<Date>,
     pub avatar: Option<String>,
     #[sea_orm(indexed)]
+    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
     pub created_at: DateTime<Utc>,
+    #[serde(serialize_with = "crate::utils::date_time::utc_to_local::serialize")]
     pub updated_at: DateTime<Utc>,
     pub created_by: String,
     pub updated_by: String,
@@ -38,8 +40,8 @@ impl sea_orm::ActiveModelBehavior for ActiveModel {
     fn new() -> Self {
         Self {
             id: ActiveValue::Set(Uuid::now_v7()),
-            created_at: ActiveValue::Set(Utc::now()),
-            updated_at: ActiveValue::Set(Utc::now()),
+            created_at: ActiveValue::Set(Local::now().into()),
+            updated_at: ActiveValue::Set(Local::now().into()),
             delete_flag: ActiveValue::Set(false),
             ..ActiveModelTrait::default()
         }

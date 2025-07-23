@@ -36,8 +36,8 @@ pub async fn get_users_service(query: UserQueryViewObject, user_repo: Arc<dyn Us
             email: user.email,
             role: user.role,
             created_by: user.created_by,
-            created_at: user.created_at.naive_local(),
-            updated_at: user.updated_at.naive_local(),
+            created_at: user.created_at,
+            updated_at: user.updated_at,
             updated_by: user.updated_by,
         }
     }).collect::<Vec<_>>();

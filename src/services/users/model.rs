@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
-use chrono::NaiveDateTime;
+use chrono::{DateTime,Utc};
 
 /// 认证响应视图对象
 #[derive(Debug, Serialize, Deserialize)]
@@ -15,8 +15,8 @@ pub struct UserResponseViewObject {
     pub email: Option<String>,
     pub role: String,
     pub created_by: Option<String>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub updated_by: Option<String>,
 }
 
