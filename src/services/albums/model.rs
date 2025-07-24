@@ -34,6 +34,7 @@ pub struct CreateAlbumViewObject {
     pub release_date: NaiveDate,
     /// 专辑描述
     pub description: Option<String>,
+    pub  genre: Option<String>,
 }
 
 /// 专辑详情视图对象

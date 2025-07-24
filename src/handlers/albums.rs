@@ -72,15 +72,7 @@ pub async fn create_album(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
     // 将ViewObject转换为DataObject
-    let data_object = models::CreateAlbumData {
-        name: data.name.clone(),
-        artist_id: data.artist_id,
-        cover_image: Some(data.cover_image.clone()),
-        release_date: data.release_date,
-        description: data.description.clone(),
-        genre: None,
-
-    };
+    let data_object = data.into_inner();
 
     let album = services::albums::create_album_service(data_object, state.config.album_repo.clone(), state.config.artist_repo.clone())
         .await

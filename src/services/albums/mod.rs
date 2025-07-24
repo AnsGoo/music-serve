@@ -2,7 +2,7 @@ pub mod model;
 use chrono::NaiveDate;
 
 use self::model::*;
-use crate::models;
+use crate::models::{self, CreateAlbumData};
 use std::fmt;
 use std::sync::Arc;
 use crate::models::album::AlbumRepository;
@@ -84,7 +84,7 @@ pub async fn get_album_by_id_service(
 
 /// 创建专辑服务
 pub async fn create_album_service(
-    data: models::CreateAlbumData,
+    data: model::CreateAlbumViewObject,
     album_repo: Arc<dyn AlbumRepository + Send + Sync>,
     artist_repo: Arc<dyn ArtistRepository + Send + Sync>
 ) -> Result<AlbumDetailViewObject, AlbumServiceError> {
@@ -97,6 +97,14 @@ pub async fn create_album_service(
         return Err(AlbumServiceError::ArtistNotFound);
     }
 
+    let data = CreateAlbumData {
+        name: data.name.clone(),
+        artist_id: data.artist_id,
+        cover_image: Some(data.cover_image),
+        release_date: data.release_date,
+        description: data.description.clone(),
+        genre: data.genre.clone(),
+    };
     // 创建专辑
     let album = album_repo.create(&data)
         .await
