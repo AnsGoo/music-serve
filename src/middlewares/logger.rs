@@ -1,4 +1,4 @@
-use actix_web::{dev::{Service, ServiceRequest, ServiceResponse, Transform}, Error, HttpMessage};
+use actix_web::{dev::{Service, ServiceRequest, ServiceResponse, Transform}, Error};
 use std::rc::Rc;
 use std::future::{Future, Ready};
 use std::pin::Pin;
