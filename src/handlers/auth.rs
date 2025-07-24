@@ -1,11 +1,12 @@
 use actix_web::{web, HttpResponse, Responder};
-use super::super::{models, AppState, services};
+use super::super::{ AppState, services};
+use actix_web_validator::Json;
 use crate::services::auth::model::LoginViewObject;
 use crate::handlers::ApiResponse;
 
 // 用户注册
 pub async fn register(
-    data: web::Json<services::auth::model::RegisterViewObject>,
+    data: Json<services::auth::model::RegisterViewObject>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, actix_web::Error> {
     let auth_response = services::auth::register_service(data.into_inner(), &state)

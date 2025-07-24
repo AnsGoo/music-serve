@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
+use validator::Validate;
 /// 登录请求视图对象
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -12,12 +12,14 @@ pub struct LoginViewObject {
 }
 
 /// 注册请求视图对象
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Validate,Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RegisterViewObject {
     /// 用户名
+    #[validate(length(min = 5, max = 20, message = "用户名必须介于5-20个字符之间"))]
     pub username: String,
     /// 密码
+    #[validate(length(min = 8, max = 20, message = "密码必须介于8-20个字符之间"))]
     pub password: String,
 }
 

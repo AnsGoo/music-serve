@@ -28,10 +28,10 @@ backtrace = "0.3.69"
 strum = "0.26.2"
 strum_macros = "0.26.2"
 sea-query = "0.32.6"
-utoipa="5"
-utoipa-swagger-ui = { version = "5", features = ["actix-web"] }
 actix-cors = "0.6.4"
 async-trait = "0.1.77"
+actix-web-validator = "6.0.0"
+validator = { version = "0.18", features = ["derive"] }
 
 
 [scripts]
